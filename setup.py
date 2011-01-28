@@ -34,7 +34,6 @@ try:
     from setuptools import setup, find_packages
     setupdict['packages'] = find_packages()
 
-    setupdict['test_suite'] = 'ionintegration'
     setupdict['install_requires'] = ['ioncore==0.4.2']
 
     
@@ -43,5 +42,5 @@ try:
 
 except ImportError:
     from distutils.core import setup
-    setupdict['packages'] = ['ionintegration']
+    setupdict['packages'] = ['ionint']
     setup(**setupdict)
