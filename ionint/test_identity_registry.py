@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file ion/services/coi/test/test_identity_registry.py
+@file ionint/test_identity_registry.py
 @author Roger Unwin
 @brief test service for registering users
 """
