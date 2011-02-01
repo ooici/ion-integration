@@ -39,4 +39,8 @@ Build and Packaging using Ant
 
 Change log:
 ===========
+2/1/11 - Added Some tests from ioncore-python that partially fulfil requirements
+         UC_R1_18_Command_An_Instrument
+         UC_R1_19_Direct_Instrument_Access
+         * Note above tests are currently broken due to re-write of DataPubSub
 .
