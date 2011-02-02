@@ -34,7 +34,7 @@ try:
     from setuptools import setup, find_packages
     setupdict['packages'] = find_packages()
 
-    setupdict['install_requires'] = ['ioncore==0.4.2']
+    setupdict['install_requires'] = ['ioncore==0.4.3']
 
     
     setupdict['include_package_data'] = True

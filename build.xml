@@ -26,8 +26,15 @@
     </delete>
     <delete dir="${build}"/>
     <delete dir="${dist}"/>
-    <delete dir="ioncore.egg-info"/>
+    <delete dir="ionintegration.egg-info"/>
     <delete dir="_trial_temp"/>
+    <echo message="Clean up buildout directories.  Run python bootstrap.py after clean"/>
+    <delete dir="parts"/>
+    <delete dir="develop-eggs"/>
+    <delete dir="bin"/>
+    <delete dir="downloads"/>
+    <delete dir="eggs"/>
+    <delete file=".installed.cfg"/>
   </target>
 
 </project>
