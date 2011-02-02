@@ -23,8 +23,11 @@ Step 2. python bootstrap.py (you only need to run this one)
 Step 3. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
 
 
-Usage
+Develop
 =====
+    Good practice to run 'ant clean' to clean buildout directories if you want to start afresh.
+
+    Then, follow Step 2 above.
 
 Step 4. bin/trial ionint
 
