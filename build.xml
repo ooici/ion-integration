@@ -1,0 +1,33 @@
+<!-- Ant build file for LCAarch -->
+<project name="LCAarch" default="info" basedir=".">
+    <description>
+        This is the ANT build file for the LCAarch OOI CI Python capability
+        container and service platform.
+    </description>
+
+  <!-- set global properties for this build -->
+  <property name="src" location="ionint"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+
+  <target name="info">
+    <echo message="Ionint ant build file. Specify a target to build"/>
+  </target>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <delete>
+      <fileset dir="${src}" includes="**/*.pyc"/>
+    </delete>
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+    <delete dir="ioncore.egg-info"/>
+    <delete dir="_trial_temp"/>
+  </target>
+
+</project>
