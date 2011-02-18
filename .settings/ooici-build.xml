@@ -1,0 +1,180 @@
+<project name="ooici_base" default="dist" xmlns:ivy="antlib:org.apache.ivy.ant" basedir="..">
+    <!-- properties inherited -->
+    
+    <!-- paths used for compilation and run  -->
+    <path id="lib.path.id">
+        <fileset dir="${lib.dir}" />
+	</path>
+    <path id="runtime.classpath">
+    	<path refid="lib.path.id" />
+        <path location="${build.dir}/" />
+    </path>
+    
+    <!-- ================================= 
+          target: resolve
+          NOTE: may want this to depends="clean" because when a dependency is removed,
+          the jar(s) are not removed from the 'lib' directory after re-running 'ant resolve'
+         ================================= -->
+    <target name="resolve" description="--> Retreive dependencies with ivy">
+    	<mkdir dir="${override-repo.dir}" />
+        <ivy:retrieve sync="true"/>
+    </target>    
+    
+    <!-- ================================= 
+          target: report-deps              
+         ================================= -->
+    <target name="report-deps" depends="resolve" description="--> Generates a report of dependencies">
+        <ivy:report todir="${ivy.report.dir}"/>
+    </target>
+
+    <!-- ================================= 
+          target: compile
+         ================================= -->
+    <target name="compile" depends="resolve" description="--> Compile the project">
+    	<antcall target="pre-compile" />
+        <mkdir dir="${build.dir}" />
+        <javac srcdir="${src.dir}" destdir="${build.dir}" >
+        	<classpath refid="lib.path.id" />
+        </javac>
+        <antcall target="post-compile" />
+    </target>
+    
+    <target name="pre-compile" description="--> Called before javac compilation - empty by default, override in build.xml to use" />
+    
+	<target name="post-compile" description="--> Called after javac compilation - empty by default, override in build.xml to use" />
+	
+    <!-- ================================= 
+          target: clean              
+         ================================= -->
+    <target name="clean" description="--> Clean the project">
+    	<delete dir="${build.dir}" />
+    	<delete dir="${lib.dir}" />
+    	<delete dir="${dist.dir}" />
+    	<delete dir="${docs.dir}" />
+    	<delete dir="${ivy.report.dir}" />
+    	<delete file="MANIFEST.MF" />
+    	<antcall target="clean-more" />
+    </target>
+    
+    <target name="clean-more" description="--> Called at the end of 'clean' - empty by default, override in build.xml to use" />
+	
+    <!-- ================================= 
+          target: clean-ivy-cache              
+         ================================= -->
+	<target name="clean-ivy-cache" description="--> Clean the ivy cache">
+		<ivy:cleancache />
+	</target>
+	
+	<!-- ================================= 
+          target: clean-ooici-cache
+         ================================= -->
+	<target name="clean-ooici-cache" description="--> Clean the ivy cache of the ooici dependencies only">
+		<delete dir="${ivy.cache.dir}/net.ooici" />
+	</target>
+	
+	<!-- ================================= 
+          target: deep-clean
+         ================================= -->
+    <target name="deep-clean" description="--> Cleans both this directory and the ivy cache">
+    	<antcall target="clean" />
+    	<antcall target="clean-ivy-cache" />
+	</target>
+	
+	<!-- ================================= 
+          target: javadoc              
+         ================================= -->
+	<target name="javadoc" depends="" description="--> Generate Javadoc">
+		<javadoc sourcepath="${src.dir}"
+			classpathref="runtime.classpath"
+		   defaultexcludes="yes"
+		   destdir="${docs.dir}"
+		   author="true"
+		   version="true"
+		   use="true"
+		   windowtitle="ION Core">
+			<doctitle><![CDATA[<h1>ION Core</h1>]]></doctitle>
+			<bottom><![CDATA[<i>Copyright &#169; 2010 UC Regents. All Rights Reserved.</i>]]></bottom>
+			<tag name="todo" scope="all" description="To do:"/>
+		</javadoc>
+	</target>
+	
+	<!-- ================================= 
+          target: dist              
+         ================================= -->
+	<target name="dist" depends="clean,compile,javadoc" description="--> Package Distribution">
+	    <!-- Create the distribution directory -->
+	    <mkdir dir="${dist.dir}" />
+	    <mkdir dir="${dist.dir}/lib"/>
+	    <mkdir dir="${dist.dir}/docs"/>
+
+		<antcall target="pre-dist" />
+		
+		<!-- Convert project class path to string property -->
+  		<pathconvert property="manifest.classpath" pathsep=" ">
+		<path refid="runtime.classpath"/>
+			<mapper>
+   				<chainedmapper>
+     				<flattenmapper/>
+     				<globmapper from="*.jar" to="lib/*.jar"/>
+  				</chainedmapper>
+  			</mapper>
+		</pathconvert>
+
+		<tstamp/><!-- needed for TODAY -->
+		<!-- Create the manifest.mf file -->
+		<manifest file="MANIFEST.MF">
+			<!--
+			<attribute name="Built-By" value="${manifest.built.by}"/>
+			<attribute name="Created-By" value="${manifest.created.by}"/>
+			-->
+			<attribute name="Main-Class" value="${runtime.main.class}"/>
+			<attribute name="Implementation-Version" value="${version}"/>   
+			<attribute name="Built-Date" value="${TODAY}"/>
+			<attribute name="Class-Path" value="${manifest.classpath}" />
+		</manifest>
+
+	    <!-- Create JAR file with library classes, tests and example code -->
+	    <jar jarfile="${dist.dir}/lib/${project.name}-full-${version}.jar"
+	    	basedir="${build.dir}"
+	    	manifest="MANIFEST.MF" />
+
+	    <!-- Create JAR file with all library classes -->
+		<jar jarfile="${dist.dir}/lib/${project.name}-${version}.jar" 
+	    	basedir="${build.dir}"
+	    	excludes="ion/example/**" 
+	    	manifest="MANIFEST.MF" />
+
+	    <!-- Create ZIP file with the javadoc -->
+		<zip destfile="${dist.dir}/docs/${project.name}-${version}-javadoc.zip"
+			basedir="${docs.dir}"
+		/>		
+
+		<!-- Create ZIP file for the entire directory -->
+		<zip destfile="${dist.dir}/${project.name}-archive.zip"
+			basedir="."
+			excludes="${dist.dir}/${project.name}-archive.zip,${build}/**,.git/**"
+		/>
+		
+		<!-- Remove the MANIFEST.MF file -->
+		<delete file="MANIFEST.MF" />
+		
+		<antcall target="post-dist" />
+	</target>
+	
+	<target name="pre-dist" description="--> Called before all actions in the dist target - empty by default, override in build.xml to use" />
+    
+	<target name="post-dist" description="--> Called after all actions in the dist target - empty by default, override in build.xml to use" />
+	
+	<target name="test-all" description="--> Runs JUnit tests for all classes ending in 'Test.java')">
+		<mkdir dir="test-report" />
+		<junit printsummary="yes" haltonfailure="no">
+			<classpath refid="runtime.classpath" />
+		
+  			<batchtest fork="yes">
+    			<fileset dir="${src.dir}">
+      				<include name="**/*Test.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+</project>

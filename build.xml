@@ -1,36 +1,54 @@
-<!-- Ant build file for LCAarch -->
-<project name="LCAarch" default="info" basedir=".">
-    <description>
-        This is the ANT build file for the LCAarch OOI CI Python capability
-        container and service platform.
-    </description>
+<project name="ionintegration-java" default="dist" xmlns:ivy="antlib:org.apache.ivy.ant" basedir=".">
+    <!-- import properties -->
+    <property file="build.properties" />
+    <!-- ivy properties & settings -->
+    <property file="${settings.dir}/ivysettings.properties" />
+    <ivy:settings file="${settings.dir}/ivysettings.xml" />
+    <!-- ooici properties -->
+    <property file="${settings.dir}/ooici.properties" />
+    <!-- import the ooici_build.xml -->
+    <import file="${settings.dir}/ooici-build.xml" />
+    
+    <!--
+    	Targets that can be overridden:
+    		- pre-compile:		Called before javac compilation - empty by default, override in build.xml to use
+      		- post-compile:		Called after javac compilation - empty by default, override in build.xml to use
+      		- pre-dist:			Called before all actions in the dist target - empty by default, override in build.xml to use
+      		- post-dist:		Called after all actions in the dist target - empty by default, override in build.xml to use
+      		- clean-more:		Called at the end of 'clean' - empty by default, override in build.xml to use
+    -->
+    
+    <!-- ================================= 
+          target: post-compile
+         ================================= -->
+    <target name="post-compile" >
+        <!-- copy the log4j.properties file -->
+        <copy file="${src.dir}/log4j.properties" todir="${build.dir}" />
+    </target>
 
   <!-- set global properties for this build -->
-  <property name="src" location="ionint"/>
-  <property name="build" location="build"/>
-  <property name="dist"  location="dist"/>
+  <property name="pysrc" location="ionint"/>
+  <property name="pybuild" location="build"/>
+  <property name="pydist"  location="dist"/>
 
-  <target name="info">
-    <echo message="Ionint ant build file. Specify a target to build"/>
-  </target>
-
-  <target name="init">
-    <!-- Create the time stamp -->
-    <tstamp/>
-  </target>
-
-  <target name="clean"
-        description="clean up" >
+    <!-- ================================= 
+          target: clean-more
+         ================================= -->
+   <target name="clean-more" >
     <delete>
-      <fileset dir="${src}" includes="**/*.pyc"/>
+      <fileset dir="${pysrc}" includes="**/*.pyc"/>
     </delete>
-    <delete dir="${build}"/>
-    <delete dir="${dist}"/>
+    <delete dir="${pybuild}"/>
+    <delete dir="${pydist}"/>
     <delete dir="ionintegration.egg-info"/>
     <delete dir="_trial_temp"/>
     <echo message="To clean buildout directories, run 'ant clean-buildout' instead."/>
   </target>
-  <target name="clean-buildout" depends="clean">
+
+    <!-- ================================= 
+          target: clean-buildout
+         ================================= -->
+  <target name="clean-buildout" depends="deep-clean">
     <echo message="Clean up buildout directories.  Run python bootstrap.py after clean"/>
     <delete dir="parts"/>
     <delete dir="develop-eggs"/>
@@ -38,6 +56,6 @@
     <delete dir="downloads"/>
     <delete dir="eggs"/>
     <delete file=".installed.cfg"/>
-  </target>
+  </target>   
 
 </project>
