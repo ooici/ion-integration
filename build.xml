@@ -57,5 +57,9 @@
     <delete dir="eggs"/>
     <delete file=".installed.cfg"/>
   </target>   
+  
+  <target name="eoi-integration-test" depends="compile">
+  	<java classpathref="runtime.classpath" classname="net.ooici.integration.eoi.IntegrationTest" />
+  </target>
 
 </project>

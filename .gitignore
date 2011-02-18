@@ -8,3 +8,9 @@ develop-eggs/
 downloads/
 bin/
 .installed.cfg
+.settings/ivy-cache
+.settings/override-repo
+.settings/
+build
+lib
+
