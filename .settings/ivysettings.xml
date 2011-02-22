@@ -40,8 +40,8 @@
         	</filesystem>
         	<!-- OOICI Package Server -->
             <url name="ooici_repo" >
-            	<artifact pattern="http://ooici.net/packages/[artifact]-[revision].[ext]" />
-            	<artifact pattern="http://ooici.net/packages/[artifact]_[revision].[ext]" />
+            	<artifact pattern="${ooici.repo.base}/[artifact]-[revision].[ext]" />
+            	<artifact pattern="${ooici.repo.base}/[artifact]_[revision].[ext]" />
             </url>
             <!-- This is the default maven 2 repository -->
             <ibiblio name="m2repo" m2compatible="true" />
