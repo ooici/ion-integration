@@ -12,8 +12,8 @@ architectural dependencies in Python.
 
 For more information, please see:
 
-Dependencies
-============
+Python Developement
+===================
     Step 1. Create virtualenv to isolate system site-packages
         mkvirtualenv --no-site-packages --python=/usr/bin/python2.5 buildout
         workon buildout
@@ -24,21 +24,23 @@ Dependencies
     
     Step 4. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
 
-
-Develop
-=====
-
     Step 5. bin/trial ionint
 
     If you want to re-run step 5, it is reccomended to rerun step 2 (ant clean) between runs of trial.
 
 
-Testing
-=======
+Java Development
+=================
 
+    Step 1. cp ivy.jar ~/.ant/lib
 
-Build and Packaging using Ant
-=============================
+    Step 2. ant eoi-integration-test 
+    (this test depends on:
+        1. a local rabbit mq server (otherwise, change ooici-conn.properties
+        to point a different rabbit mq)
+        2. ion container running (follow python dev steps above to run
+        bin/buildout)
+        bin/twistd -n cc -h localhost -a sysname=eoitest res/scripts/eoi_demo.py
 
 
 
