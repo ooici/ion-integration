@@ -134,9 +134,9 @@
 		</manifest>
 
 	    <!-- Create JAR file with library classes, tests and example code -->
-	    <jar jarfile="${dist.dir}/lib/${project.name}-full-${version}.jar"
+	    <!-- <jar jarfile="${dist.dir}/lib/${project.name}-full-${version}.jar"
 	    	basedir="${build.dir}"
-	    	manifest="MANIFEST.MF" />
+	    	manifest="MANIFEST.MF" /> -->
 
 	    <!-- Create JAR file with all library classes -->
 		<jar jarfile="${dist.dir}/lib/${project.name}-${version}.jar" 
