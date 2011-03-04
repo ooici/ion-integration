@@ -42,7 +42,10 @@ Java Development
         bin/buildout)
         bin/twistd -n cc -h localhost -a sysname=eoitest res/scripts/eoi_demo.py
 
-
+Clean buildout depedencies
+==========================
+    To completely clean out buildout directories and start fresh:
+    ant clean-buildout
 
 Change log:
 ===========
