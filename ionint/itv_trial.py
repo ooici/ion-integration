@@ -15,6 +15,18 @@ To use, derive your test from ion.test.ItvTestCase and fill in the services clas
 attribute with a list of apps your test needs. Apps are relative to the current working
 directory and typically reside in the res/apps subdir of ioncore-python.
 
+Entries in the "services" class array may be strings pointing to the apps themselves, or
+tuples, the first being the string to the app and the second being arguments to pass on
+the command line, intended to be used by the services themselves. Some samples:
+
+    # starts a single attribute store app
+    services = ["res/apps/attributestore.app"]
+
+    # starts two attribute store apps
+    services = [("res/apps/attributestore.app, "id=1")      # id is not used by attributestore but is used
+                ("res/apps/attributestore.app, "id=2")]     #   to differentiate the two attributestore
+                                                            #   services here.
+
 Example:
 
     class AttributeStoreTest(ItvTestCase):
@@ -77,12 +89,19 @@ def main():
 
     walksuite(totalsuite, testclasses)
 
+    print str(totalsuite)
+
     services = {}
 
     for x in testclasses:
         #print str(x), "%s.%s" % (cls.__module__, cls.__name__)
         if hasattr(x, 'services'):
             for y in x.services:
+
+                # if not specified as a (appfile, args) tuple, make it one
+                if not isinstance(y, tuple):
+                    y = (y, None)
+
                 if not services.has_key(y):
                     services[y] = []
 
@@ -99,11 +118,34 @@ def main():
 
     ccs = []
     for service in services.keys():
+
+        # build serviceargs to pass to service (should be param=value pairs as strings)
+        serviceargs=""
+        if service[1]:
+            params = service[1]
+            if not isinstance(params, list):
+                params = [params]
+            serviceargs = ",".join(params)
+
+        # build extraargs
+        extraargs = "sysname=%s" % opts.sysname
+        if len(serviceargs) > 0:
+            extraargs += "," + serviceargs
+
+        # temporary log/pid path
         tf = os.path.join(tempfile.gettempdir(), "cc-" + str(uuid4()))
-        sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-n", "-a", "sysname=%s" % opts.sysname, service]
+
+        # build command line
+        sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-n", "-a", extraargs, service[0]]
+
+        # set alternate logging conf to just go to stdout
         newenv = os.environ.copy()
         newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
+
+        # spawn container
         po = subprocess.Popen(sargs, env=newenv)
+
+        # add to list of open containers
         ccs.append(po)
 
     if len(services) > 0:
