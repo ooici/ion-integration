@@ -73,8 +73,10 @@ def main():
     # get command line options
     p = optparse.OptionParser()
 
-    p.add_option("--sysname",action="store",dest="sysname")
-    p.set_defaults(sysname=str(uuid4()))  # make up a new random sysname
+    p.add_option("--sysname",   action="store", dest="sysname")
+    p.add_option("--hostname",  action="store", dest="hostname")
+    p.add_option("--debug",     action="store_true", dest="debug")
+    p.set_defaults(sysname=str(uuid4()), hostname="localhost", debug=False)  # make up a new random sysname
     opts, args = p.parse_args()
 
     totalsuite = TestLoader().loadByNames(args, True)
@@ -89,7 +91,8 @@ def main():
 
     walksuite(totalsuite, testclasses)
 
-    print str(totalsuite)
+    if opts.debug:
+        print str(totalsuite)
 
     services = {}
 
@@ -136,7 +139,10 @@ def main():
         tf = os.path.join(tempfile.gettempdir(), "cc-" + str(uuid4()))
 
         # build command line
-        sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-n", "-a", extraargs, service[0]]
+        sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-h", opts.hostname, "-n", "-a", extraargs, service[0]]
+
+        if opts.debug:
+            print sargs
 
         # set alternate logging conf to just go to stdout
         newenv = os.environ.copy()
@@ -180,6 +186,7 @@ def main():
         newenv = os.environ.copy()
         newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
         newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
+        newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
         os.execve("bin/trial", ["bin/trial"] + args, newenv)
 
     def cleanup():
