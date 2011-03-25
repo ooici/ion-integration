@@ -81,6 +81,7 @@ def get_opts():
 
     p.add_option("--sysname",   action="store",     dest="sysname", help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
     p.add_option("--hostname",  action="store",     dest="hostname",help="Connect to the broker at this hostname. If not specified, uses localhost.")
+    p.add_option("--merge",     action="store_true",dest="merge",   help="Merge the environment for all integration tests and run them in one shot.")
     p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
     p.add_option("--debug-cc",  action="store_true",dest="debug_cc",help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
 
@@ -93,7 +94,7 @@ def get_test_classes(testargs):
     Uses the same parsing loader that trial does (which we eventually run).
     """
     totalsuite = TestLoader().loadByNames(testargs, True)
-    testclasses = set()
+    all_testclasses = set()
 
     def walksuite(suite, res):
         for x in suite:
@@ -102,9 +103,9 @@ def get_test_classes(testargs):
             else:
                 walksuite(x, res)
 
-    walksuite(totalsuite, testclasses)
+    walksuite(totalsuite, all_testclasses)
 
-    return testclasses
+    return all_testclasses
 
 def build_twistd_args(service, serviceargs, opts, shell=False):
     """
@@ -131,12 +132,16 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
 
 def main():
     opts, args = get_opts()
-    testclasses = get_test_classes(args)
+    all_testclasses = get_test_classes(args)
 
+    if opts.merge:
+        # merge all tests into one set
+        testset = [all_testclasses]
+    else:
+        # split out each test on its own
+        testset = [[x] for x in all_testclasses]
 
-    # non merged run
-    for testclass in [[x] for x in testclasses]:
-
+    for testclass in testset:
         app_dependencies = {}
         for x in testclass:
             print str(x), "%s.%s" % (x.__module__, x.__name__)
