@@ -8,29 +8,29 @@
 itv_trial is designed to be a lightweight integration testing framework for
 projects based on ION.  The goal is to be able to use the same tests, via trial,
 to do integration testing on a CEI bootstrapped system running in a cloud environment,
-and a local system where services your tests require are run in separate 
+and a local system where app_dependencies your tests require are run in separate 
 capability containers.
 
-To use, derive your test from ion.test.ItvTestCase and fill in the services class
+To use, derive your test from ion.test.ItvTestCase and fill in the app_dependencies class
 attribute with a list of apps your test needs. Apps are relative to the current working
 directory and typically reside in the res/apps subdir of ioncore-python.
 
-Entries in the "services" class array may be strings pointing to the apps themselves, or
+Entries in the "app_dependencies" class array may be strings pointing to the apps themselves, or
 tuples, the first being the string to the app and the second being arguments to pass on
-the command line, intended to be used by the services themselves. Some samples:
+the command line, intended to be used by the app_dependencies themselves. Some samples:
 
     # starts a single attribute store app
-    services = ["res/apps/attributestore.app"]
+    app_dependencies = ["res/apps/attributestore.app"]
 
     # starts two attribute store apps
-    services = [("res/apps/attributestore.app, "id=1")      # id is not used by attributestore but is used
+    app_dependencies = [("res/apps/attributestore.app, "id=1")      # id is not used by attributestore but is used
                 ("res/apps/attributestore.app, "id=2")]     #   to differentiate the two attributestore
-                                                            #   services here.
+                                                            #   app_dependencies here.
 
 Example:
 
     class AttributeStoreTest(ItvTestCase):
-        services = ["res/apps/attributestore.app"]  # start these apps prior to testing.
+        app_dependencies = ["res/apps/attributestore.app"]  # start these apps prior to testing.
 
         @defer.inlineCallbacks
         def setUp(self):
@@ -56,7 +56,7 @@ Example:
             self.failUnless(res == "hellothere")
 
 Important points:
-- The sysname parameter is required to get all the services and tests running on the same
+- The sysname parameter is required to get all the app_dependencies and tests running on the same
   system. itv_trial takes care of this for you, but if you want to deploy these tests vs 
   a CEI spawned environment, you must set the environment variable ION_TEST_CASE_SYSNAME
   to be the same as the sysname the CEI environment was spawned with.
@@ -69,17 +69,30 @@ from uuid import uuid4
 import subprocess
 import optparse
 
-def main():
-    # get command line options
+def gen_sysname():
+    return str(uuid4())[:6]     # gen uuid, use at most 6 chars
+
+def get_opts():
+    """
+    Get command line options.
+    Sets up option parser, calls gen_sysname to create a new sysname for defaults.
+    """
     p = optparse.OptionParser()
 
-    p.add_option("--sysname",   action="store", dest="sysname")
-    p.add_option("--hostname",  action="store", dest="hostname")
-    p.add_option("--debug",     action="store_true", dest="debug")
-    p.set_defaults(sysname=str(uuid4()), hostname="localhost", debug=False)  # make up a new random sysname
-    opts, args = p.parse_args()
+    p.add_option("--sysname",   action="store",     dest="sysname", help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
+    p.add_option("--hostname",  action="store",     dest="hostname",help="Connect to the broker at this hostname. If not specified, uses localhost.")
+    p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
+    p.add_option("--debug-cc",  action="store_true",dest="debug_cc",help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
 
-    totalsuite = TestLoader().loadByNames(args, True)
+    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False)  # make up a new random sysname
+    return p.parse_args()
+
+def get_test_classes(testargs):
+    """
+    Gets a set of test classes that will be run.
+    Uses the same parsing loader that trial does (which we eventually run).
+    """
+    totalsuite = TestLoader().loadByNames(testargs, True)
     testclasses = set()
 
     def walksuite(suite, res):
@@ -91,111 +104,140 @@ def main():
 
     walksuite(totalsuite, testclasses)
 
-    if opts.debug:
-        print str(totalsuite)
+    return testclasses
 
-    services = {}
+def build_twistd_args(service, serviceargs, opts, shell=False):
+    """
+    Returns an array suitable for spawning a twistd cc container.
+    """
+    # build extraargs
+    extraargs = "sysname=%s" % opts.sysname
+    if len(serviceargs) > 0:
+        extraargs += "," + serviceargs
 
-    for x in testclasses:
-        #print str(x), "%s.%s" % (cls.__module__, cls.__name__)
-        if hasattr(x, 'services'):
-            for y in x.services:
+    # temporary log/pid path
+    tf = os.path.join(tempfile.gettempdir(), "cc-" + str(uuid4()))
 
-                # if not specified as a (appfile, args) tuple, make it one
-                if not isinstance(y, tuple):
-                    y = (y, None)
+    # build command line
+    sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-h", opts.hostname]
+    if not shell:
+        sargs.append("-n")
+    sargs.append("-a")
+    sargs.append(extraargs)
+    if service != "":
+        sargs.append(service)
 
-                if not services.has_key(y):
-                    services[y] = []
+    return sargs
 
-                services[y].append(x)
+def main():
+    opts, args = get_opts()
+    testclasses = get_test_classes(args)
 
-    if len(services) > 0:
-        print "The following services will be started:"
-        for service in services.keys():
-            extra = "(%s)" % ",".join([tc.__name__ for tc in services[service]])
-            print "\t", service, extra
 
-        print "Pausing before starting..."
-        time.sleep(5)
+    # non merged run
+    for testclass in [[x] for x in testclasses]:
 
-    ccs = []
-    for service in services.keys():
+        app_dependencies = {}
+        for x in testclass:
+            print str(x), "%s.%s" % (x.__module__, x.__name__)
+            if hasattr(x, 'app_dependencies'):
+                for y in x.app_dependencies:
 
-        # build serviceargs to pass to service (should be param=value pairs as strings)
-        serviceargs=""
-        if service[1]:
-            params = service[1]
-            if not isinstance(params, list):
-                params = [params]
-            serviceargs = ",".join(params)
+                    # if not specified as a (appfile, args) tuple, make it one
+                    if not isinstance(y, tuple):
+                        y = (y, None)
 
-        # build extraargs
-        extraargs = "sysname=%s" % opts.sysname
-        if len(serviceargs) > 0:
-            extraargs += "," + serviceargs
+                    if not app_dependencies.has_key(y):
+                        app_dependencies[y] = []
 
-        # temporary log/pid path
-        tf = os.path.join(tempfile.gettempdir(), "cc-" + str(uuid4()))
+                    app_dependencies[y].append(x)
 
-        # build command line
-        sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-h", opts.hostname, "-n", "-a", extraargs, service[0]]
+        if len(app_dependencies) > 0:
+            print "The following app_dependencies will be started:"
+            for service in app_dependencies.keys():
+                extra = "(%s)" % ",".join([tc.__name__ for tc in app_dependencies[service]])
+                print "\t", service, extra
 
-        if opts.debug:
-            print sargs
+            print "Pausing before starting..."
+            time.sleep(5)
 
-        # set alternate logging conf to just go to stdout
-        newenv = os.environ.copy()
-        newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
+        ccs = []
+        for service in app_dependencies.keys():
 
-        # spawn container
-        po = subprocess.Popen(sargs, env=newenv)
+            # build serviceargs to pass to service (should be param=value pairs as strings)
+            serviceargs=""
+            if service[1]:
+                params = service[1]
+                if not isinstance(params, list):
+                    params = [params]
+                serviceargs = ",".join(params)
 
-        # add to list of open containers
-        ccs.append(po)
+            # build command line
+            sargs = build_twistd_args(service[0], serviceargs, opts)
 
-    if len(services) > 0:
-        print "Waiting for containers to spin up..."
-        time.sleep(5)
+            if opts.debug:
+                print sargs
 
-    # relay signals to trial process we're waiting for
-    def handle_signal(signum, frame):
-        os.kill(trialpid, signum)
+            # set alternate logging conf to just go to stdout
+            newenv = os.environ.copy()
+            newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
 
-    trialpid = os.fork()
-    if trialpid != 0:
-        # PARENT PROCESS: this script
+            # spawn container
+            po = subprocess.Popen(sargs, env=newenv)
 
-        # set new signal handlers to relay signals into trial
-        oldterm = signal.signal(signal.SIGTERM, handle_signal)
-        #oldkill = signal.signal(signal.SIGKILL, handle_signal)
-        oldint  = signal.signal(signal.SIGINT, handle_signal)
+            # add to list of open containers
+            ccs.append(po)
 
-        # wait on trial
-        try:
-            os.wait()
-        except OSError:
-            pass
+        if len(app_dependencies) > 0:
+            print "Waiting for containers to spin up..."
+            time.sleep(5)
 
-        # restore old signal handlers
-        signal.signal(signal.SIGTERM, oldterm)
-        #signal.signal(signal.SIGKILL, oldkill)
-        signal.signal(signal.SIGINT, oldint)
-    else:
-        # NEW CHILD PROCESS: spawn trial, exec into nothingness
-        newenv = os.environ.copy()
-        newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
-        newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
-        newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
-        os.execve("bin/trial", ["bin/trial"] + args, newenv)
+        # relay signals to trial process we're waiting for
+        def handle_signal(signum, frame):
+            os.kill(trialpid, signum)
 
-    def cleanup():
-        print "Cleaning up services..."
-        for cc in ccs:
-            print "\tClosing container with pid:", cc.pid
-            os.kill(cc.pid, signal.SIGTERM)
+        trialpid = os.fork()
+        if trialpid != 0:
+            # PARENT PROCESS: this script
 
-    cleanup()
+            # set new signal handlers to relay signals into trial
+            oldterm = signal.signal(signal.SIGTERM, handle_signal)
+            #oldkill = signal.signal(signal.SIGKILL, handle_signal)
+            oldint  = signal.signal(signal.SIGINT, handle_signal)
+
+            # wait on trial
+            try:
+                os.wait()
+            except OSError:
+                pass
+
+            # restore old signal handlers
+            signal.signal(signal.SIGTERM, oldterm)
+            #signal.signal(signal.SIGKILL, oldkill)
+            signal.signal(signal.SIGINT, oldint)
+        else:
+            # NEW CHILD PROCESS: spawn trial, exec into nothingness
+            newenv = os.environ.copy()
+            newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
+            newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
+            newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
+            if not opts.debug_cc:
+                trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
+
+                os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
+            else:
+                # spawn an interactive twistd shell into this system
+                print "DEBUG_CC:"
+                sargs = build_twistd_args("", "", opts, True)
+                os.execve("bin/twistd", sargs, newenv)
+
+        def cleanup():
+            print "Cleaning up app_dependencies..."
+            for cc in ccs:
+                print "\tClosing container with pid:", cc.pid
+                os.kill(cc.pid, signal.SIGTERM)
+
+        cleanup()
 
 if __name__ == "__main__":
     main()
