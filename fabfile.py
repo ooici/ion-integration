@@ -85,7 +85,7 @@ def _ensureClean():
     local('git pull --rebase')
     local('git fetch --tags')
 
-def gitTag(version):
+def _gitTag(version):
     with hide('running', 'stdout', 'stderr'):
         remotes = local('git remote', capture=True).split()
         if len(remotes) == 0:
@@ -125,7 +125,7 @@ def _gitForwardMaster(remote, branch='develop'):
     local('git push %s master' % (remote))
 
 scpUser = None
-def deploy(pkgPattern):
+def _deploy(pkgPattern):
     global scpUser
     if scpUser is None:
         scpUser = os.getlogin()
@@ -139,17 +139,17 @@ def python():
         with hide('running', 'stdout', 'stderr'):
             currentVersionStr = local('python setup.py --version', capture=True)
 
+        version = _getNextVersion(currentVersionStr)
         nextVersionStr = versionTemplates['python'] % version
 
         with open(os.path.join('ion', 'core', 'version.py'), 'w') as versionFile:
             versionFile.write(nextVersionStr)
 
-        version = _bumpPythonVersion()
-        remote = gitTag(version)
+        remote = _gitTag(version)
 
         local('python setup.py sdist')
         local('chmod -R 775 dist')
-        deploy('dist/*.tar.gz')
+        _deploy('dist/*.tar.gz')
         #_gitForwardMaster(remote)
 
 class JavaVersion(object):
@@ -170,11 +170,11 @@ def java():
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = gitTag(version.version)
+        remote = _gitTag(version.version)
 
         local('ant dist')
         local('chmod -R 775 dist/lib')
-        deploy('dist/lib/*.jar')
+        _deploy('dist/lib/*.jar')
         #_gitForwardMaster(remote)
 
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
@@ -187,11 +187,11 @@ def proto():
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = gitTag(version.version)
+        remote = _gitTag(version.version)
 
         local('ant dist')
         local('chmod -R 775 dist')
 
-        deploy('dist/lib/*.tar.gz')
-        deploy('dist/lib/*.jar')
+        _deploy('dist/lib/*.tar.gz')
+        _deploy('dist/lib/*.jar')
 
