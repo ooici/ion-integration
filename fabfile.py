@@ -22,6 +22,7 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'git-tag': 'v%(major)s.%(minor)s.%(micro)s'
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
     , 'short': '%(major)s.%(minor)s.%(micro)s'
+    , 'setup-py': "version = '%(major)s.%(minor)s.%(micro)s',"
 }
 
 
@@ -123,10 +124,13 @@ def _gitForwardMaster(remote, branch='develop'):
     local('git merge %s' % (branch))
     local('git push %s master' % (remote))
 
+scpUser = None
 def _deploy(pkgPattern):
-    username = os.getlogin()
-    username = prompt('Please enter your amoeba login name:', default=username)
-    local('scp %s %s@amoeba:/var/www/releases' % (pkgPattern, username))
+    global scpUser
+    if scpUser is None:
+        scpUser = os.getlogin()
+        scpUser = prompt('Please enter your amoeba login name:', default=scpUser)
+    local('scp %s %s@amoeba:/var/www/releases' % (pkgPattern, scpUser))
 
 def python():
     with lcd(os.path.join('..', 'ioncore-python')):
@@ -135,18 +139,26 @@ def python():
         with hide('running', 'stdout', 'stderr'):
             currentVersionStr = local('python setup.py --version', capture=True)
 
-        version = _getNextVersion(currentVersionStr)
         nextVersionStr = versionTemplates['python'] % version
 
         with open(os.path.join('ion', 'core', 'version.py'), 'w') as versionFile:
             versionFile.write(nextVersionStr)
 
+        version = _bumpPythonVersion()
         remote = _gitTag(version)
 
         local('python setup.py sdist')
-        local('chmod -R 755 dist')
+        local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
         #_gitForwardMaster(remote)
+
+class JavaVersion(object):
+    def __init__(self):
+        self.version = None
+    def __call__(self, currentVersionStr):
+        if self.version is None:
+            self.version = _getNextVersion(currentVersionStr)
+        return self.version
 
 ivyRevisionRe = re.compile('(?P<indent>\s*)<info .* revision="(?P<version>[^"]+)"')
 buildRevisionRe = re.compile('(?P<indent>\s*)version=(?P<version>[^\s]+)')
@@ -154,22 +166,32 @@ def java():
     with lcd(os.path.join('..', 'ioncore-java')):
         _ensureClean()
 
-        class Version(object):
-            def __init__(self):
-                self.version = None
-            def __call__(self, currentVersionStr):
-                if self.version is None:
-                    self.version = _getNextVersion(currentVersionStr)
-                return self.version
-
-        version = Version()
+        version = JavaVersion()
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
         remote = _gitTag(version.version)
 
         local('ant dist')
-        local('chmod -R 755 dist/lib')
+        local('chmod -R 775 dist/lib')
         _deploy('dist/lib/*.jar')
         #_gitForwardMaster(remote)
+
+setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
+def proto():
+    with lcd(os.path.join('..', 'ion-object-definitions')):
+        _ensureClean()
+
+        version = JavaVersion()
+        _replaceVersionInFile(os.path.join('python', 'setup.py'), setupPyRevisionRe, versionTemplates['setup-py'], version)
+        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
+        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
+
+        remote = _gitTag(version.version)
+
+        local('ant dist')
+        local('chmod -R 775 dist')
+
+        _deploy('dist/lib/*.tar.gz')
+        _deploy('dist/lib/*.jar')
 
