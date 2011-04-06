@@ -77,7 +77,7 @@ def _ensureClean():
         if branch != 'develop':
             abort('You must be in the "develop" branch (you are in "%s").' % (branch))
 
-        changes = local('git status -s', capture=True)
+        changes = local('git status -s --untracked-files=no', capture=True)
 
     clean = (len(changes) == 0)
     if not clean: abort('You have local git modifications, please revert or commit first.')
