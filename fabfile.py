@@ -85,7 +85,7 @@ def _ensureClean():
     local('git pull --rebase')
     local('git fetch --tags')
 
-def _gitTag(version):
+def gitTag(version):
     with hide('running', 'stdout', 'stderr'):
         remotes = local('git remote', capture=True).split()
         if len(remotes) == 0:
@@ -125,7 +125,7 @@ def _gitForwardMaster(remote, branch='develop'):
     local('git push %s master' % (remote))
 
 scpUser = None
-def _deploy(pkgPattern):
+def deploy(pkgPattern):
     global scpUser
     if scpUser is None:
         scpUser = os.getlogin()
@@ -145,11 +145,11 @@ def python():
             versionFile.write(nextVersionStr)
 
         version = _bumpPythonVersion()
-        remote = _gitTag(version)
+        remote = gitTag(version)
 
         local('python setup.py sdist')
         local('chmod -R 775 dist')
-        _deploy('dist/*.tar.gz')
+        deploy('dist/*.tar.gz')
         #_gitForwardMaster(remote)
 
 class JavaVersion(object):
@@ -170,11 +170,11 @@ def java():
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = _gitTag(version.version)
+        remote = gitTag(version.version)
 
         local('ant dist')
         local('chmod -R 775 dist/lib')
-        _deploy('dist/lib/*.jar')
+        deploy('dist/lib/*.jar')
         #_gitForwardMaster(remote)
 
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
@@ -187,11 +187,11 @@ def proto():
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = _gitTag(version.version)
+        remote = gitTag(version.version)
 
         local('ant dist')
         local('chmod -R 775 dist')
 
-        _deploy('dist/lib/*.tar.gz')
-        _deploy('dist/lib/*.jar')
+        deploy('dist/lib/*.tar.gz')
+        deploy('dist/lib/*.jar')
 
