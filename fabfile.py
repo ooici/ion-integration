@@ -130,7 +130,11 @@ def _deploy(pkgPattern):
     if scpUser is None:
         scpUser = os.getlogin()
         scpUser = prompt('Please enter your amoeba login name:', default=scpUser)
-    local('scp %s %s@amoeba:/var/www/releases' % (pkgPattern, scpUser))
+
+    host = 'amoeba'
+    local('scp %s %s@%s:/var/www/releases' % (pkgPattern, scpUser, host))
+    local('ssh %s@%s chmod -R 775 /var/www/releases' % (scpUser, host))
+    local('ssh %s@%s chgrp -R teamlead /var/www/releases' % (scpUser, host))
 
 def python():
     with lcd(os.path.join('..', 'ioncore-python')):
