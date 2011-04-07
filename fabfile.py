@@ -37,17 +37,25 @@ def _validateVersion(v):
     if not m:
         raise Exception('Version must be in the format <number>.<number>.<number>[<string>]')
 
-    vals = m.groupdict()
-    for k in ('major', 'minor', 'micro'): vals[k] = int(vals[k])
-    return vals
+    valDict = m.groupdict()
+    for k in ('major', 'minor', 'micro'): valDict[k] = int(valDict[k])
+    valTuple = (valDict['major'], valDict['minor'], valDict['micro'])
+    return valDict, valTuple
 
 def _getNextVersion(currentVersionStr):
-    cvd = _validateVersion(currentVersionStr)
+    cvd, cvt = _validateVersion(currentVersionStr)
     nextVersion = '%d.%d.%d' % (cvd['major'], cvd['minor'], cvd['micro'] + 1)
 
-    version = prompt('Please enter the new version (current is "%s"):' % (currentVersionStr),
+    versionD, versionT = prompt('Please enter the new version (current is "%s"):' % (currentVersionStr),
                      default=nextVersion, validate=_validateVersion)
-    return version
+
+    if versionT <= cvt:
+        yesno = prompt('You entered "%s", which is not higher than the current ("%s") and may overwrite a previous release. Are you absolutely SURE? (y/n)' %
+                       (versionTemplates['short'] % versionD, currentVersionStr), default='n') 
+        if yesno != 'y':
+            abort('Invalid version requested, please try again.')
+
+    return versionD
 
 def _replaceVersionInFile(filename, matchRe, template, versionCb):
     with open(filename, 'r') as rfile:
