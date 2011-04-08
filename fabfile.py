@@ -17,7 +17,8 @@ from _version import Version
 # VERSION !!! This is the main version !!!
 version = Version('ion', %(major)s, %(minor)s, %(micro)s)
 '''
-    , 'java-ivy': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
+    , 'java-ivy-ioncore': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
+    , 'java-ivy-proto': '<info module="ionproto" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-build': 'version=%(major)s.%(minor)s.%(micro)s'
     , 'git-tag': 'v%(major)s.%(minor)s.%(micro)s'
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
@@ -140,21 +141,27 @@ def _gitForwardMaster(remote, branch='develop'):
     local('git push %s master' % (remote))
 
 scpUser = None
-def _deploy(pkgPattern):
+def _deploy(pkgPattern, recursive=True, subdir=''):
+    host = 'amoeba'
+    remotePath = '/var/www/releases%s' % (subdir)
+
     global scpUser
     if scpUser is None:
         scpUser = os.getlogin()
         scpUser = prompt('Please enter your amoeba login name:', default=scpUser)
 
-    host = 'amoeba'
-    files = local('ls %s' % pkgPattern, capture=True).split(' ')
-    filenames = [file.rsplit(os.sep, 1)[-1] for file in files]
-    for i,file in enumerate(files):
-        filename = filenames[i]
-        print 'Pushing %s...' % (filename)
-        local('scp %s %s@%s:/var/www/releases' % (file, scpUser, host))
-        local('ssh %s@%s chmod 775 /var/www/releases/%s' % (scpUser, host, filename))
-        local('ssh %s@%s chgrp teamlead /var/www/releases/%s' % (scpUser, host, filename))
+    prefix = ''
+    if '*' in pkgPattern:
+        prefix = pkgPattern.partition('*')[0]
+
+    recurseFlag = '-r' if recursive else ''
+    files = local('find %s' % pkgPattern, capture=True).split()
+    relFiles = [file[len(prefix):] for file in files]
+    relFileStr = ' '.join(['%s/%s' % (remotePath, file) for file in relFiles])
+
+    local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
+    local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
+    local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
 
 def _showIntro():
     print '''
@@ -211,12 +218,13 @@ def java():
         _ensureClean()
 
         version = JavaVersion()
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
+        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-ioncore'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        local('ant dist')
+        local('ant ivy-publish-local')
         local('chmod -R 775 dist/lib')
-        _deploy('dist/lib/*.jar')
+
+        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
         remote = _gitTag(version.version)
         #_gitForwardMaster(remote)
@@ -229,14 +237,14 @@ def proto():
 
         version = JavaVersion()
         _replaceVersionInFile(os.path.join('python', 'setup.py'), setupPyRevisionRe, versionTemplates['setup-py'], version)
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
+        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-proto'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        local('ant dist')
+        local('ant ivy-publish-local')
         local('chmod -R 775 dist')
 
         _deploy('dist/lib/*.tar.gz')
-        _deploy('dist/lib/*.jar')
+        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
         remote = _gitTag(version.version)
 
