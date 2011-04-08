@@ -146,8 +146,27 @@ def _deploy(pkgPattern):
     local('ssh %s@%s chmod -R 775 /var/www/releases' % (scpUser, host))
     local('ssh %s@%s chgrp -R teamlead /var/www/releases' % (scpUser, host))
 
+def _showIntro():
+    print '''
+-------------------------------------------------------------------------------------------------------------
+ION Release Script v1.0
+https://confluence.oceanobservatories.org/display/CIDev/Release+Workflow
+
+This is the release script for packaging, tagging, and pushing new versions of various ION components.
+This script assumes you are in an "ion-integration" repo clone, which is a sibling of:
+"ioncore-python", "ioncore-java", or "ion-object-definitions" (whichever you intend to release).
+
+Prerequisites:
+ 1) You should not have any local modifications in the repo you wish to release.
+ 2) You should be on the "develop" branch.
+ 3) You should already be at the exact commit that you want to release as a new version.
+ 4) You should have already updated your dependent versions in config files and committed (at least locally).
+-------------------------------------------------------------------------------------------------------------
+'''
+
 def python():
     with lcd(os.path.join('..', 'ioncore-python')):
+        _showIntro()
         _ensureClean()
 
         with hide('running', 'stdout', 'stderr'):
@@ -178,6 +197,7 @@ ivyRevisionRe = re.compile('(?P<indent>\s*)<info .* revision="(?P<version>[^"]+)
 buildRevisionRe = re.compile('(?P<indent>\s*)version=(?P<version>[^\s]+)')
 def java():
     with lcd(os.path.join('..', 'ioncore-java')):
+        _showIntro()
         _ensureClean()
 
         version = JavaVersion()
@@ -194,6 +214,7 @@ def java():
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
 def proto():
     with lcd(os.path.join('..', 'ion-object-definitions')):
+        _showIntro()
         _ensureClean()
 
         version = JavaVersion()
