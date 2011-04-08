@@ -100,7 +100,9 @@ def _gitTag(version):
             abort('You have no configured git remotes.')
 
     branch = 'develop'
-    remote = 'origin' if 'origin' in remotes else remotes[0]
+    remote = ('origin' if 'origin' in remotes else
+              'ooici' if 'ooici' in remotes else
+              remotes[0])
     remote = prompt('Please enter the git remote to use:', default=remote)
     if not remote in remotes:
         abort('"%s" is not a configured remote.' % (remote))
@@ -157,11 +159,11 @@ def python():
         with open(os.path.join('ion', 'core', 'version.py'), 'w') as versionFile:
             versionFile.write(nextVersionStr)
 
-        remote = _gitTag(version)
-
         local('python setup.py sdist')
         local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
+
+        remote = _gitTag(version)
         #_gitForwardMaster(remote)
 
 class JavaVersion(object):
@@ -182,11 +184,11 @@ def java():
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = _gitTag(version.version)
-
         local('ant dist')
         local('chmod -R 775 dist/lib')
         _deploy('dist/lib/*.jar')
+
+        remote = _gitTag(version.version)
         #_gitForwardMaster(remote)
 
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
@@ -199,11 +201,11 @@ def proto():
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = _gitTag(version.version)
-
         local('ant dist')
         local('chmod -R 775 dist')
 
         _deploy('dist/lib/*.tar.gz')
         _deploy('dist/lib/*.jar')
+
+        remote = _gitTag(version.version)
 
