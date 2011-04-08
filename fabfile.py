@@ -90,7 +90,12 @@ def _ensureClean():
     clean = (len(changes) == 0)
     if not clean: abort('You have local git modifications, please revert or commit first.')
 
-    local('git pull --rebase')
+    commitsBehind = int(local('git rev-list ^HEAD | wc -l', capture=True).strip())
+    if commitsBehind > 0:
+        yesno = prompt('You are %d commits behind HEAD. Are you SURE you want to release this version? (y/n)' % (commitsBehind), default='n')
+        if yesno != 'y':
+            abort('Local is behind HEAD, please try again.')
+
     local('git fetch --tags')
 
 def _gitTag(version):
@@ -142,9 +147,14 @@ def _deploy(pkgPattern):
         scpUser = prompt('Please enter your amoeba login name:', default=scpUser)
 
     host = 'amoeba'
-    local('scp %s %s@%s:/var/www/releases' % (pkgPattern, scpUser, host))
-    local('ssh %s@%s chmod -R 775 /var/www/releases' % (scpUser, host))
-    local('ssh %s@%s chgrp -R teamlead /var/www/releases' % (scpUser, host))
+    files = local('ls %s' % pkgPattern, capture=True).split(' ')
+    filenames = [file.rsplit(os.sep, 1)[-1] for file in files]
+    for i,file in enumerate(files):
+        filename = filenames[i]
+        print 'Pushing %s...' % (filename)
+        local('scp %s %s@%s:/var/www/releases' % (file, scpUser, host))
+        local('ssh %s@%s chmod 775 /var/www/releases/%s' % (scpUser, host, filename))
+        local('ssh %s@%s chgrp teamlead /var/www/releases/%s' % (scpUser, host, filename))
 
 def _showIntro():
     print '''
