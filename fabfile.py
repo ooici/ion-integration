@@ -17,11 +17,13 @@ from _version import Version
 # VERSION !!! This is the main version !!!
 version = Version('ion', %(major)s, %(minor)s, %(micro)s)
 '''
-    , 'java-ivy': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
+    , 'java-ivy-ioncore': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
+    , 'java-ivy-proto': '<info module="ionproto" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-build': 'version=%(major)s.%(minor)s.%(micro)s'
     , 'git-tag': 'v%(major)s.%(minor)s.%(micro)s'
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
     , 'short': '%(major)s.%(minor)s.%(micro)s'
+    , 'setup-py': "version = '%(major)s.%(minor)s.%(micro)s',"
 }
 
 
@@ -36,17 +38,25 @@ def _validateVersion(v):
     if not m:
         raise Exception('Version must be in the format <number>.<number>.<number>[<string>]')
 
-    vals = m.groupdict()
-    for k in ('major', 'minor', 'micro'): vals[k] = int(vals[k])
-    return vals
+    valDict = m.groupdict()
+    for k in ('major', 'minor', 'micro'): valDict[k] = int(valDict[k])
+    valTuple = (valDict['major'], valDict['minor'], valDict['micro'])
+    return valDict, valTuple
 
 def _getNextVersion(currentVersionStr):
-    cvd = _validateVersion(currentVersionStr)
+    cvd, cvt = _validateVersion(currentVersionStr)
     nextVersion = '%d.%d.%d' % (cvd['major'], cvd['minor'], cvd['micro'] + 1)
 
-    version = prompt('Please enter the new version (current is "%s"):' % (currentVersionStr),
+    versionD, versionT = prompt('Please enter the new version (current is "%s"):' % (currentVersionStr),
                      default=nextVersion, validate=_validateVersion)
-    return version
+
+    if versionT <= cvt:
+        yesno = prompt('You entered "%s", which is not higher than the current ("%s") and may overwrite a previous release. Are you absolutely SURE? (y/n)' %
+                       (versionTemplates['short'] % versionD, currentVersionStr), default='n') 
+        if yesno != 'y':
+            abort('Invalid version requested, please try again.')
+
+    return versionD
 
 def _replaceVersionInFile(filename, matchRe, template, versionCb):
     with open(filename, 'r') as rfile:
@@ -76,12 +86,17 @@ def _ensureClean():
         if branch != 'develop':
             abort('You must be in the "develop" branch (you are in "%s").' % (branch))
 
-        changes = local('git status -s', capture=True)
+        changes = local('git status -s --untracked-files=no', capture=True)
 
     clean = (len(changes) == 0)
     if not clean: abort('You have local git modifications, please revert or commit first.')
 
-    local('git pull --rebase')
+    commitsBehind = int(local('git rev-list ^HEAD | wc -l', capture=True).strip())
+    if commitsBehind > 0:
+        yesno = prompt('You are %d commits behind HEAD. Are you SURE you want to release this version? (y/n)' % (commitsBehind), default='n')
+        if yesno != 'y':
+            abort('Local is behind HEAD, please try again.')
+
     local('git fetch --tags')
 
 def _gitTag(version):
@@ -91,7 +106,9 @@ def _gitTag(version):
             abort('You have no configured git remotes.')
 
     branch = 'develop'
-    remote = 'origin' if 'origin' in remotes else remotes[0]
+    remote = ('origin' if 'origin' in remotes else
+              'ooici' if 'ooici' in remotes else
+              remotes[0])
     remote = prompt('Please enter the git remote to use:', default=remote)
     if not remote in remotes:
         abort('"%s" is not a configured remote.' % (remote))
@@ -123,13 +140,50 @@ def _gitForwardMaster(remote, branch='develop'):
     local('git merge %s' % (branch))
     local('git push %s master' % (remote))
 
-def _deploy(pkgPattern):
-    username = os.getlogin()
-    username = prompt('Please enter your amoeba login name:', default=username)
-    local('scp %s %s@amoeba:/var/www/releases' % (pkgPattern, username))
+scpUser = None
+def _deploy(pkgPattern, recursive=True, subdir=''):
+    host = 'amoeba'
+    remotePath = '/var/www/releases%s' % (subdir)
+
+    global scpUser
+    if scpUser is None:
+        scpUser = os.getlogin()
+        scpUser = prompt('Please enter your amoeba login name:', default=scpUser)
+
+    prefix = ''
+    if '*' in pkgPattern:
+        prefix = pkgPattern.partition('*')[0]
+
+    recurseFlag = '-r' if recursive else ''
+    files = local('find %s' % pkgPattern, capture=True).split()
+    relFiles = [file[len(prefix):] for file in files]
+    relFileStr = ' '.join(['%s/%s' % (remotePath, file) for file in relFiles])
+
+    local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
+    local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
+    local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
+
+def _showIntro():
+    print '''
+-------------------------------------------------------------------------------------------------------------
+ION Release Script v1.0
+https://confluence.oceanobservatories.org/display/CIDev/Release+Workflow
+
+This is the release script for packaging, tagging, and pushing new versions of various ION components.
+This script assumes you are in an "ion-integration" repo clone, which is a sibling of:
+"ioncore-python", "ioncore-java", or "ion-object-definitions" (whichever you intend to release).
+
+Prerequisites:
+ 1) You should not have any local modifications in the repo you wish to release.
+ 2) You should be on the "develop" branch.
+ 3) You should already be at the exact commit that you want to release as a new version.
+ 4) You should have already updated your dependent versions in config files and committed (at least locally).
+-------------------------------------------------------------------------------------------------------------
+'''
 
 def python():
     with lcd(os.path.join('..', 'ioncore-python')):
+        _showIntro()
         _ensureClean()
 
         with hide('running', 'stdout', 'stderr'):
@@ -141,35 +195,56 @@ def python():
         with open(os.path.join('ion', 'core', 'version.py'), 'w') as versionFile:
             versionFile.write(nextVersionStr)
 
-        remote = _gitTag(version)
-
         local('python setup.py sdist')
-        local('chmod -R 755 dist')
+        local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
+
+        remote = _gitTag(version)
         #_gitForwardMaster(remote)
+
+class JavaVersion(object):
+    def __init__(self):
+        self.version = None
+    def __call__(self, currentVersionStr):
+        if self.version is None:
+            self.version = _getNextVersion(currentVersionStr)
+        return self.version
 
 ivyRevisionRe = re.compile('(?P<indent>\s*)<info .* revision="(?P<version>[^"]+)"')
 buildRevisionRe = re.compile('(?P<indent>\s*)version=(?P<version>[^\s]+)')
 def java():
     with lcd(os.path.join('..', 'ioncore-java')):
+        _showIntro()
         _ensureClean()
 
-        class Version(object):
-            def __init__(self):
-                self.version = None
-            def __call__(self, currentVersionStr):
-                if self.version is None:
-                    self.version = _getNextVersion(currentVersionStr)
-                return self.version
-
-        version = Version()
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy'], version)
+        version = JavaVersion()
+        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-ioncore'], version)
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-        remote = _gitTag(version.version)
+        local('ant ivy-publish-local')
+        local('chmod -R 775 dist/lib')
 
-        local('ant dist')
-        local('chmod -R 755 dist/lib')
-        _deploy('dist/lib/*.jar')
+        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
+
+        remote = _gitTag(version.version)
         #_gitForwardMaster(remote)
+
+setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
+def proto():
+    with lcd(os.path.join('..', 'ion-object-definitions')):
+        _showIntro()
+        _ensureClean()
+
+        version = JavaVersion()
+        _replaceVersionInFile(os.path.join('python', 'setup.py'), setupPyRevisionRe, versionTemplates['setup-py'], version)
+        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-proto'], version)
+        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
+
+        local('ant ivy-publish-local')
+        local('chmod -R 775 dist')
+
+        _deploy('dist/lib/*.tar.gz')
+        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
+
+        remote = _gitTag(version.version)
 
