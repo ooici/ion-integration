@@ -164,7 +164,7 @@ def main():
                 print "\t", service, extra
 
             print "Pausing before starting..."
-            time.sleep(5)
+            time.sleep(15)
 
         ccs = []
         for service in app_dependencies.keys():
@@ -203,6 +203,7 @@ def main():
 
         trialpid = os.fork()
         if trialpid != 0:
+            print "CHILD PID IS ", trialpid
             # PARENT PROCESS: this script
 
             # set new signal handlers to relay signals into trial
@@ -212,7 +213,7 @@ def main():
 
             # wait on trial
             try:
-                os.wait()
+                os.waitpid(trialpid, 0)
             except OSError:
                 pass
 
