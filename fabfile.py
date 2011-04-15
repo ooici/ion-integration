@@ -17,9 +17,10 @@ from _version import Version
 # VERSION !!! This is the main version !!!
 version = Version('ion', %(major)s, %(minor)s, %(micro)s)
 '''
-    , 'java-ivy-ioncore': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
+    , 'java-ivy-ioncore-dev': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s-dev" />'
     , 'java-ivy-proto': '<info module="ionproto" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-build': 'version=%(major)s.%(minor)s.%(micro)s'
+    , 'java-build-dev': 'version=%(major)s.%(minor)s.%(micro)s-dev'
     , 'git-tag': 'v%(major)s.%(minor)s.%(micro)s'
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
     , 'short': '%(major)s.%(minor)s.%(micro)s'
@@ -57,6 +58,24 @@ def _getNextVersion(currentVersionStr):
             abort('Invalid version requested, please try again.')
 
     return versionD
+
+
+def _getVersionInFile(filename, matchRe):
+    with open(filename, 'r') as rfile:
+        lines = rfile.readlines()
+
+    currentVersionStr = None
+    for linenum,line in enumerate(lines):
+        m = matchRe.search(line)
+        if m:
+            vals = m.groupdict()
+            indent, currentVersionStr, linesep = vals['indent'], vals['version'], line[-1]
+            break
+
+    if currentVersionStr is None:
+        abort('Version not found in %s.' % (filename))
+    versionD, versionT = _validateVersion(currentVersionStr)
+    return versionD, versionT, currentVersionStr
 
 def _replaceVersionInFile(filename, matchRe, template, versionCb):
     with open(filename, 'r') as rfile:
@@ -142,7 +161,7 @@ def _gitForwardMaster(remote, branch='develop'):
 
 scpUser = None
 def _deploy(pkgPattern, recursive=True, subdir=''):
-    host = 'amoeba'
+    host = 'amoeba.ucsd.edu'
     remotePath = '/var/www/releases%s' % (subdir)
 
     global scpUser
@@ -160,8 +179,8 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     relFileStr = ' '.join(['%s/%s' % (remotePath, file) for file in relFiles])
 
     local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
-    local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
-    local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
+    # local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
+    # local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
 
 def _showIntro():
     print '''
@@ -196,7 +215,7 @@ def python():
             versionFile.write(nextVersionStr)
 
         local('python setup.py sdist')
-        local('chmod -R 775 dist')
+        local('chmod -R 2775 dist')
         _deploy('dist/*.tar.gz')
 
         remote = _gitTag(version)
@@ -210,6 +229,16 @@ class JavaVersion(object):
             self.version = _getNextVersion(currentVersionStr)
         return self.version
 
+class JavaNextVersion(object):
+    def __init__(self):
+        self.version = None
+    def __call__(self, currentVersionStr):
+        if self.version is None:
+            cvd, _ = _validateVersion(currentVersionStr)
+            cvd['micro'] = cvd['micro'] + 1
+            self.version = cvd
+        return self.version
+
 ivyRevisionRe = re.compile('(?P<indent>\s*)<info .* revision="(?P<version>[^"]+)"')
 buildRevisionRe = re.compile('(?P<indent>\s*)version=(?P<version>[^\s]+)')
 def java():
@@ -217,17 +246,39 @@ def java():
         _showIntro()
         _ensureClean()
 
-        version = JavaVersion()
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-ioncore'], version)
-        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
+        ivyVersionD, ivyVersionT, ivyVersionS = _getVersionInFile('ivy.xml', ivyRevisionRe)
+        if ivyVersionD['pre'] is not None:
+            abort('Cannot release a version with suffix %s in ivy.xml.' %
+                    ivyVersionD['pre'])
+        buildVersionD, buildVersionT, buildVersionS  = _getVersionInFile('build.properties', buildRevisionRe)
+        if buildVersionD['pre'] is not None:
+            abort('Cannot release a version with suffix %s in build.properties.' %
+                    buildVersionD['pre'])
+        if (ivyVersionT != buildVersionT):
+            abort('Versions do not match in ivy.xml and build.properties')
 
         local('ant ivy-publish-local')
-        local('chmod -R 775 dist/lib')
+        local('chmod -R 2775 .settings/ivy-publish/')
 
         _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
-        remote = _gitTag(version.version)
-        #_gitForwardMaster(remote)
+        devVersion = JavaNextVersion()
+        devVersion(buildVersionS)
+        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-ioncore-dev'], devVersion)
+        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build-dev'], devVersion)
+        
+        remote =  _gitTag(buildVersionD)
+        # _gitForwardMaster(remote)
+
+def javadev():
+    with lcd(os.path.join('..', 'ioncore-java')):
+        _showIntro()
+        _ensureClean()
+
+        local('ant ivy-publish-local')
+        local('chmod -R 2775 .settings/ivy-publish/')
+
+        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
 def proto():
@@ -241,7 +292,8 @@ def proto():
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
         local('ant ivy-publish-local')
-        local('chmod -R 775 dist')
+        local('chmod -R 2775 dist')
+        local('chmod -R 2775 .settings/ivy-publish/')
 
         _deploy('dist/lib/*.tar.gz')
         _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
