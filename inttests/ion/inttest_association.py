@@ -17,7 +17,7 @@ from ion.services.dm.inventory.test.test_association_service import AssociationS
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
 
-class GoIntTestIngest(ItvTestCase,AssociationServiceTest):
+class AssociationServiceIntegrationTest(ItvTestCase,AssociationServiceTest):
 
     app_dependencies = ["res/deploy/events.rel"]
     services = []       # blank out services from base class so setUp doens't start them.

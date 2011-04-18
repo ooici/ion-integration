@@ -23,10 +23,10 @@ class IntTestIngest(ItvTestCase):
 
     app_dependencies = [
                 # four copies of ingest services
-                ("res/apps/eoi_ingester.app", "id=1"),
-                ("res/apps/eoi_ingester.app", "id=2"),
-                ("res/apps/eoi_ingester.app", "id=3"),
-                ("res/apps/eoi_ingester.app", "id=4"),
+                ("res/apps/ingestion.app", "id=1"),
+                ("res/apps/ingestion.app", "id=2"),
+                ("res/apps/ingestion.app", "id=3"),
+                ("res/apps/ingestion.app", "id=4"),
                 # four copies of JAW
                 ("res/apps/eoiagent.app", "id=1"),
                 ("res/apps/eoiagent.app", "id=2"),

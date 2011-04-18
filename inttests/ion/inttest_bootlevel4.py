@@ -18,7 +18,7 @@ from ion.services.coi.datastore import ID_CFG
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
 
-class Bootlevel4LocalReadyTest(ItvTestCase):
+class Bootlevel4ReadyTest(ItvTestCase):
 
     app_dependencies = ["res/deploy/bootlevel4.rel"]
 
