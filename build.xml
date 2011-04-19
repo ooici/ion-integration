@@ -58,8 +58,14 @@
     <delete file=".installed.cfg"/>
   </target>   
   
+<!-- ****No Longer Supported**** -->
+<!-- 
   <target name="eoi-integration-test" depends="compile">
   	<java classpathref="runtime.classpath" classname="net.ooici.integration.eoi.IntegrationTest" />
-  </target>
+  </target>-->
+  
+  <target name="get-eoi-agents" description="==> Uses Apache Ivy to retreive the eoi-agents jar (as specified in the ivy.xml file) and all its transitive dependencies">
+        <ivy:retrieve sync="true" overwriteMode="always" />
+    </target>
 
 </project>
