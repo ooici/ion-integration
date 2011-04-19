@@ -5,8 +5,14 @@
         <conf name="compile"/>
     </configurations>
     <dependencies>
+    
+    	<!-- Eoi-agents dependency - transitive dependencies included -->
+    	<dependency org="net.ooici" name="eoi-agents" rev="0.2.2" conf="*->*,!sources,!javadoc" transitive="true"/>
+    
+    <!-- All of these dependencies (and a few more) come as transitive deps of the eoi-agents project, so there's no need to specify them here -->
+    
         <!-- Public dependencies -->
-        <dependency org="org.slf4j" name="slf4j-api" rev="1.6.1" conf="*->*,!sources,!javadoc" />
+        <!-- <dependency org="org.slf4j" name="slf4j-api" rev="1.6.1" conf="*->*,!sources,!javadoc" />
         <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" conf="*->*,!sources,!javadoc" />
         <dependency org="org.msgpack" name="msgpack" rev="0.3" conf="*->*,!sources,!javadoc"/>
         <dependency org="com.rabbitmq" name="amqp-client" rev="1.8.1" conf="*->*,!sources,!javadoc" />
@@ -14,25 +20,25 @@
         <dependency org="com.google.protobuf" name="protobuf-java" rev="2.3.0"/>
 
         <dependency org="jaxen" name="jaxen" rev="1.1.1" conf="*->*,!sources,!javadoc" transitive="false"/>
-        <dependency org="colt" name="colt" rev="1.2.0" conf="*->*,!sources,!javadoc" />
+        <dependency org="colt" name="colt" rev="1.2.0" conf="*->*,!sources,!javadoc" />-->
 
         <!-- Spring framework libs -->
-        <dependency org="org.springframework" name="spring-aop" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />
+        <!-- <dependency org="org.springframework" name="spring-aop" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />
         <dependency org="org.springframework" name="spring-context-support" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />
         <dependency org="org.springframework" name="spring-core" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />
         <dependency org="org.springframework" name="spring-oxm" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />
-        <dependency org="org.springframework" name="spring-test" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />
+        <dependency org="org.springframework" name="spring-test" rev="3.0.4.RELEASE" conf="*->*,!sources,!javadoc" transitive="false" />-->
         <!-- More Spring framework libs - from different repository -->
-        <dependency org="org.springframework.amqp" name="spring-amqp" rev="1.0.0.M1" conf="*->*,!sources,!javadoc"  transitive="false" />
+        <!-- <dependency org="org.springframework.amqp" name="spring-amqp" rev="1.0.0.M1" conf="*->*,!sources,!javadoc"  transitive="false" />
         <dependency org="org.springframework.amqp" name="spring-rabbit" rev="1.0.0.M1" conf="*->*,!sources,!javadoc"  transitive="false" />
-        <dependency org="org.springframework.amqp" name="spring-rabbit-admin" rev="1.0.0.M1" conf="*->*,!sources,!javadoc"  transitive="false" />
+        <dependency org="org.springframework.amqp" name="spring-rabbit-admin" rev="1.0.0.M1" conf="*->*,!sources,!javadoc"  transitive="false" />-->
         <!-- JUnit -->
-        <dependency org="junit" name="junit" rev="4.8.2" conf="*->*,!sources,!javadoc"/>
+        <!-- <dependency org="junit" name="junit" rev="4.8.2" conf="*->*,!sources,!javadoc"/>-->
         <!-- OOICI Package Server -->
-        <dependency name="ionproto" rev="0.3.11" conf="*->*,!sources,!javadoc" />
+        <!-- <dependency name="ionproto" rev="0.3.11" conf="*->*,!sources,!javadoc" />
         <dependency name="eoi-agents" rev="0.2.0" conf="*->*,!sources,!javadoc" />
         <dependency name="ioncore-java" rev="0.2.0" conf="*->*,!sources,!javadoc" />
-        <dependency name="zz-ooi-netcdf-full" rev="4.2.4" conf="*->*,!sources,!javadoc" />
+        <dependency name="zz-ooi-netcdf-full" rev="4.2.4" conf="*->*,!sources,!javadoc" />-->
         
     </dependencies>
 </ivy-module>

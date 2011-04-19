@@ -38,8 +38,14 @@
         		<artifact pattern="${override-repo.dir}/[artifact]-[revision].[ext]" />
             	<artifact pattern="${override-repo.dir}/[artifact]_[revision].[ext]" />
         	</filesystem>
-        	<!-- OOICI Package Server -->
+        	<!-- ***NEW*** OOICI Maven Repository -->
             <url name="ooici_repo" >
+                <ivy pattern="http://ooici.net/releases/maven/repo/net/ooici/[module]/[revision]/ivy-[revision].xml" />
+                <artifact pattern="http://ooici.net/releases/maven/repo/net/ooici/[module]/[revision]/[artifact]-[revision].[ext]" />
+            </url>
+        	<!--***OLD*** OOICI Package Server
+        	Still need this for the zz-ooici-netcdf-java.jar -->
+            <url name="ooici_repo_old" >
             	<artifact pattern="${ooici.repo.base}/[artifact]-[revision].[ext]" />
             	<artifact pattern="${ooici.repo.base}/[artifact]_[revision].[ext]" />
             </url>
