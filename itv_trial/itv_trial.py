@@ -63,7 +63,7 @@ Important points:
 """
 
 import os, tempfile, signal, time
-from twisted.trial.runner import TestLoader
+from twisted.trial.runner import TestLoader, ErrorHolder
 from twisted.trial.unittest import TestSuite
 from uuid import uuid4
 import subprocess
@@ -98,6 +98,12 @@ def get_test_classes(testargs, debug=False):
 
     def walksuite(suite, res):
         for x in suite:
+            if isinstance(x, ErrorHolder):
+                print "ERROR DETECTED:"
+                x.error.printBriefTraceback()
+
+                raise Exception("Trial's test loader found an error, we must abort: %s" % str(x))
+
             if not isinstance(x, TestSuite):
                 if debug:
                     print "Adding to test suites", x.__class__
