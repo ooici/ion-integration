@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering'
                   ],
-    packages = find_packages() + ['ionint'],
+    packages = find_packages() + ['itv_trial'],
     install_requires = [
         'ioncore'
                        ],
