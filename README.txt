@@ -24,7 +24,7 @@ Python Developement
     
     Step 4. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
 
-    Step 5. bin/trial ionint
+    Step 5. bin/trial itv_trial
 
     If you want to re-run step 5, it is reccomended to rerun step 2 (ant clean) between runs of trial.
 

@@ -27,7 +27,7 @@
     </target>
 
   <!-- set global properties for this build -->
-  <property name="pysrc" location="ionint"/>
+  <property name="pysrc" location="itv_trial"/>
   <property name="pybuild" location="build"/>
   <property name="pydist"  location="dist"/>
 
