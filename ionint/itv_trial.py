@@ -88,7 +88,7 @@ def get_opts():
     p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False)  # make up a new random sysname
     return p.parse_args()
 
-def get_test_classes(testargs):
+def get_test_classes(testargs, debug=False):
     """
     Gets a set of test classes that will be run.
     Uses the same parsing loader that trial does (which we eventually run).
@@ -99,6 +99,9 @@ def get_test_classes(testargs):
     def walksuite(suite, res):
         for x in suite:
             if not isinstance(x, TestSuite):
+                if debug:
+                    print "Adding to test suites", x.__class__
+
                 res.add(x.__class__)
             else:
                 walksuite(x, res)
@@ -132,7 +135,7 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
 
 def main():
     opts, args = get_opts()
-    all_testclasses = get_test_classes(args)
+    all_testclasses = get_test_classes(args, opts.debug)
 
     if opts.merge:
         # merge all tests into one set

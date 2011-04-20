@@ -33,7 +33,7 @@ class IntTestIngest(ItvTestCase):
                 ("res/apps/eoiagent.app", "id=3"),
                 ("res/apps/eoiagent.app", "id=4"),
                 # one resource registry with demodata registered
-                ("res/apps/resource.app", "register=demodata"),
+                ("res/apps/resources.app", "register=demodata"),
                 ]
 
     @defer.inlineCallbacks
