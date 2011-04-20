@@ -68,6 +68,7 @@ from twisted.trial.unittest import TestSuite
 from uuid import uuid4
 import subprocess
 import optparse
+import string
 
 def gen_sysname():
     return str(uuid4())[:6]     # gen uuid, use at most 6 chars
@@ -151,6 +152,9 @@ def main():
         # split out each test on its own
         testset = [[x] for x in all_testclasses]
 
+    # mapping of testclass => result (as a status code, returned by executing trial)
+    results = {}
+
     for testclass in testset:
         app_dependencies = {}
         for x in testclass:
@@ -216,7 +220,9 @@ def main():
 
         trialpid = os.fork()
         if trialpid != 0:
-            print "CHILD PID IS ", trialpid
+            if opts.debug:
+                print "TRIAL CHILD PID IS ", trialpid
+
             # PARENT PROCESS: this script
 
             # set new signal handlers to relay signals into trial
@@ -226,7 +232,17 @@ def main():
 
             # wait on trial
             try:
-                os.waitpid(trialpid, 0)
+                cpid, status = os.waitpid(trialpid, 0)
+
+                # STATUS FROM TRIAL:
+                # 0     - test OK
+                # 256   - test FAIL or ERROR
+
+                results[str(testclass)] = status
+
+                if opts.debug:
+                    print "Trial complete for", testclass, " status: ", status
+
             except OSError:
                 pass
 
@@ -258,5 +274,23 @@ def main():
 
         cleanup()
 
+    if len(results) > 0:
+        print "\n\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+        print "ITV TRIAL RESULTS:"
+
+        for testclass, result in results.iteritems():
+            classstr = testclass #string.ljust(str(testclass)[:50], 50)
+            if result == 0:
+                resultstr = "OK"
+            elif result == 256:
+                resultstr = "FAIL"
+            else:
+                resultstr = "UNKNOWN??? (%d)" % result
+
+            print "\t", classstr, "\t", resultstr
+
+        print "\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
+
 if __name__ == "__main__":
     main()
+
