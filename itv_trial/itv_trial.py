@@ -82,6 +82,7 @@ def get_opts():
     p.add_option("--sysname",   action="store",     dest="sysname", help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
     p.add_option("--hostname",  action="store",     dest="hostname",help="Connect to the broker at this hostname. If not specified, uses localhost.")
     p.add_option("--merge",     action="store_true",dest="merge",   help="Merge the environment for all integration tests and run them in one shot.")
+    p.add_option("--no-pause",  action="store_true",dest="nopause", help="Do not pause after finding all tests and deps to run.")
     p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
     p.add_option("--debug-cc",  action="store_true",dest="debug_cc",help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
 
@@ -172,8 +173,9 @@ def main():
                 extra = "(%s)" % ",".join([tc.__name__ for tc in app_dependencies[service]])
                 print "\t", service, extra
 
-            print "Pausing before starting..."
-            time.sleep(15)
+            if not opts.nopause:
+                print "Pausing before starting..."
+                time.sleep(5)
 
         ccs = []
         for service in app_dependencies.keys():
@@ -204,6 +206,8 @@ def main():
 
         if len(app_dependencies) > 0:
             print "Waiting for containers to spin up..."
+
+            # @TODO: really need some sort of mechanism to actually wait here.
             time.sleep(5)
 
         # relay signals to trial process we're waiting for
