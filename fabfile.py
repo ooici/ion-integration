@@ -173,12 +173,14 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     if '*' in pkgPattern:
         prefix = pkgPattern.partition('*')[0]
 
-    recurseFlag = '-r' if recursive else ''
+    recurseFlag = '-rp' if recursive else '-p'
     files = local('find %s' % pkgPattern, capture=True).split()
     relFiles = [file[len(prefix):] for file in files]
     relFileStr = ' '.join(['%s/%s' % (remotePath, file) for file in relFiles])
 
-    local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
+    # suppress scp -p error status with a superfluous command so we can
+    # continue
+    local('scp %s %s %s@%s:%s || echo OK' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
     # local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
     # local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
 

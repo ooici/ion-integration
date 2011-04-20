@@ -24,7 +24,14 @@ Python Developement
     
     Step 4. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
 
-    Step 5. bin/trial itv_trial
+    Step 5.
+        a. bin/trial itv_trial
+        b. bin/itv itv_trial
+            These test will show that the your environment is properly configured
+
+    Step 6. bin/itv tests
+        Not yet consistently runnable!
+
 
     If you want to re-run step 5, it is reccomended to rerun step 2 (ant clean) between runs of trial.
 
