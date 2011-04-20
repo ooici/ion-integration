@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file sample_inttest.py
+@file sample_integration_test.py
 @author David Stuebe
 @test Example test file
 """
@@ -32,4 +32,6 @@ class SampleTest(ItvTestCase):
     def test_something(self):
         p = Process()
         yield p.spawn()
+
+
 
