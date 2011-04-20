@@ -5,7 +5,7 @@ from twisted.internet import defer
 from ion.services.coi.attributestore import AttributeStoreClient
 
 class AttributeStoreTest(ItvTestCase):
-    services = ["res/apps/attributestore.app"]  # start these apps prior to testing.
+    app_dependencies = ["res/apps/attributestore.app"]  # start these apps prior to testing.
 
     @defer.inlineCallbacks
     def setUp(self):
