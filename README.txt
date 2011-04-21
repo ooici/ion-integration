@@ -12,6 +12,14 @@ architectural dependencies in Python.
 
 For more information, please see:
 
+++++++
++
++ The res directory is currently a mess.
++
++ To operate the ion-integration tests you must replace it with a symlink to the ioncore-python res directory
++
+++++++
+
 Python Developement
 ===================
     Step 1. Create virtualenv to isolate system site-packages
