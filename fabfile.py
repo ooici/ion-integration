@@ -178,9 +178,11 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     relFiles = [file[len(prefix):] for file in files]
     relFileStr = ' '.join(['%s/%s' % (remotePath, file) for file in relFiles])
 
+    # suppress scp -p error status with a superfluous command so we can
+    # continue
     local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
-    # local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
-    # local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
+    local('ssh %s@%s chmod 775 %s' % (scpUser, host, relFileStr))
+    local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
 
 def _showIntro():
     print '''
@@ -215,7 +217,7 @@ def python():
             versionFile.write(nextVersionStr)
 
         local('python setup.py sdist')
-        local('chmod -R 2775 dist')
+        local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
 
         remote = _gitTag(version)
@@ -258,7 +260,7 @@ def java():
             abort('Versions do not match in ivy.xml and build.properties')
 
         local('ant ivy-publish-local')
-        local('chmod -R 2775 .settings/ivy-publish/')
+        local('chmod -R 775 .settings/ivy-publish/')
 
         _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
@@ -276,7 +278,7 @@ def javadev():
         _ensureClean()
 
         local('ant ivy-publish-local')
-        local('chmod -R 2775 .settings/ivy-publish/')
+        local('chmod -R 775 .settings/ivy-publish/')
 
         _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
@@ -292,8 +294,8 @@ def proto():
         _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
         local('ant ivy-publish-local')
-        local('chmod -R 2775 dist')
-        local('chmod -R 2775 .settings/ivy-publish/')
+        local('chmod -R 775 dist')
+        local('chmod -R 775 .settings/ivy-publish/')
 
         _deploy('dist/lib/*.tar.gz')
         _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')

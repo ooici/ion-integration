@@ -63,11 +63,12 @@ Important points:
 """
 
 import os, tempfile, signal, time
-from twisted.trial.runner import TestLoader
+from twisted.trial.runner import TestLoader, ErrorHolder
 from twisted.trial.unittest import TestSuite
 from uuid import uuid4
 import subprocess
 import optparse
+import sys
 
 def gen_sysname():
     return str(uuid4())[:6]     # gen uuid, use at most 6 chars
@@ -82,8 +83,10 @@ def get_opts():
     p.add_option("--sysname",   action="store",     dest="sysname", help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
     p.add_option("--hostname",  action="store",     dest="hostname",help="Connect to the broker at this hostname. If not specified, uses localhost.")
     p.add_option("--merge",     action="store_true",dest="merge",   help="Merge the environment for all integration tests and run them in one shot.")
+    p.add_option("--no-pause",  action="store_true",dest="nopause", help="Do not pause after finding all tests and deps to run.")
     p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
     p.add_option("--debug-cc",  action="store_true",dest="debug_cc",help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
+    p.add_option("--wrap-twisted-bin", action="store",dest="wrapbin",help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
 
     p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False)  # make up a new random sysname
     return p.parse_args()
@@ -98,6 +101,12 @@ def get_test_classes(testargs, debug=False):
 
     def walksuite(suite, res):
         for x in suite:
+            if isinstance(x, ErrorHolder):
+                print "ERROR DETECTED:"
+                x.error.printBriefTraceback()
+
+                raise Exception("Trial's test loader found an error, we must abort: %s" % str(x))
+
             if not isinstance(x, TestSuite):
                 if debug:
                     print "Adding to test suites", x.__class__
@@ -131,6 +140,10 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
     if service != "":
         sargs.append(service)
 
+    # if specified, wrap the twisted container spawn in this exec
+    if opts.wrapbin and not shell:
+        sargs.insert(0, opts.wrapbin)
+
     return sargs
 
 def main():
@@ -143,6 +156,9 @@ def main():
     else:
         # split out each test on its own
         testset = [[x] for x in all_testclasses]
+
+    # mapping of testclass => result (as a status code, returned by executing trial)
+    results = {}
 
     for testclass in testset:
         app_dependencies = {}
@@ -166,8 +182,9 @@ def main():
                 extra = "(%s)" % ",".join([tc.__name__ for tc in app_dependencies[service]])
                 print "\t", service, extra
 
-            print "Pausing before starting..."
-            time.sleep(15)
+            if not opts.nopause:
+                print "Pausing before starting..."
+                time.sleep(5)
 
         ccs = []
         for service in app_dependencies.keys():
@@ -198,6 +215,8 @@ def main():
 
         if len(app_dependencies) > 0:
             print "Waiting for containers to spin up..."
+
+            # @TODO: really need some sort of mechanism to actually wait here.
             time.sleep(5)
 
         # relay signals to trial process we're waiting for
@@ -206,7 +225,9 @@ def main():
 
         trialpid = os.fork()
         if trialpid != 0:
-            print "CHILD PID IS ", trialpid
+            if opts.debug:
+                print "TRIAL CHILD PID IS ", trialpid
+
             # PARENT PROCESS: this script
 
             # set new signal handlers to relay signals into trial
@@ -216,7 +237,17 @@ def main():
 
             # wait on trial
             try:
-                os.waitpid(trialpid, 0)
+                cpid, status = os.waitpid(trialpid, 0)
+
+                # STATUS FROM TRIAL:
+                # 0     - test OK
+                # 256   - test FAIL or ERROR
+
+                results[str(testclass)] = status
+
+                if opts.debug:
+                    print "Trial complete for", testclass, " status: ", status
+
             except OSError:
                 pass
 
@@ -248,5 +279,37 @@ def main():
 
         cleanup()
 
+    exitcode = 0
+    resultlen = len(results)
+    countfail = 0
+
+    if resultlen > 0:
+        print "\n\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+        print "ITV TRIAL RESULTS:"
+
+        for testclass, result in results.iteritems():
+            classstr = testclass #string.ljust(str(testclass)[:50], 50)
+            if result == 0:
+                resultstr = "OK"
+            elif result == 256:
+                # we will at least exit with 1
+                exitcode = 1
+                # count all the failures
+                countfail += 1
+                resultstr = "FAIL"
+            else:
+                resultstr = "UNKNOWN??? (%d)" % result
+
+            print "\t", classstr, "\t", resultstr
+
+        print "\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
+
+    # if every test class failed, exit with 2
+    if countfail == resultlen:
+        exitcode = 2
+
+    sys.exit(exitcode)
+
 if __name__ == "__main__":
     main()
+

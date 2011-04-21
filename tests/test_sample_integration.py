@@ -12,13 +12,16 @@ from ion.test.iontest import ItvTestCase
 from ion.core import ioninit
 from ion.core.process.process import Process
 
+from ion.core.process.test.test_service import EchoServiceTest
 
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
 
-class SampleTest(ItvTestCase):
+class SampleTest(ItvTestCase, EchoServiceTest):
 
-    app_dependencies = ["res/apps/ioncore.app"]
+    app_dependencies = ["res/apps/echo_example.app"]
+
+    services=[]
 
     @defer.inlineCallbacks
     def setUp(self):
