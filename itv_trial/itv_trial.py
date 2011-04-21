@@ -86,6 +86,7 @@ def get_opts():
     p.add_option("--no-pause",  action="store_true",dest="nopause", help="Do not pause after finding all tests and deps to run.")
     p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
     p.add_option("--debug-cc",  action="store_true",dest="debug_cc",help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
+    p.add_option("--wrap-twisted-bin", action="store",dest="wrapbin",help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
 
     p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False)  # make up a new random sysname
     return p.parse_args()
@@ -138,6 +139,10 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
     sargs.append(extraargs)
     if service != "":
         sargs.append(service)
+
+    # if specified, wrap the twisted container spawn in this exec
+    if opts.wrapbin and not shell:
+        sargs.insert(0, opts.wrapbin)
 
     return sargs
 
