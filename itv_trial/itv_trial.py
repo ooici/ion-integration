@@ -68,7 +68,7 @@ from twisted.trial.unittest import TestSuite
 from uuid import uuid4
 import subprocess
 import optparse
-import string
+import sys
 
 def gen_sysname():
     return str(uuid4())[:6]     # gen uuid, use at most 6 chars
@@ -274,7 +274,11 @@ def main():
 
         cleanup()
 
-    if len(results) > 0:
+    exitcode = 0
+    resultlen = len(results)
+    countfail = 0
+
+    if resultlen > 0:
         print "\n\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
         print "ITV TRIAL RESULTS:"
 
@@ -283,6 +287,10 @@ def main():
             if result == 0:
                 resultstr = "OK"
             elif result == 256:
+                # we will at least exit with 1
+                exitcode = 1
+                # count all the failures
+                countfail += 1
                 resultstr = "FAIL"
             else:
                 resultstr = "UNKNOWN??? (%d)" % result
@@ -290,6 +298,12 @@ def main():
             print "\t", classstr, "\t", resultstr
 
         print "\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
+
+    # if every test class failed, exit with 2
+    if countfail == resultlen:
+        exitcode = 2
+
+    sys.exit(exitcode)
 
 if __name__ == "__main__":
     main()
