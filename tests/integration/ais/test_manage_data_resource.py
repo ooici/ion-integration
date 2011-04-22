@@ -15,7 +15,7 @@ from ion.core.exception import ReceivedApplicationError
 from ion.util import procutils as pu
 
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
-from ion.services.coi.resource_registry.resource_client import ResourceClient
+from ion.services.coi.resource_registry_beta.resource_client import ResourceClient
 from ion.core.messaging.message_client import MessageClient
 from ion.core.process.process import Process
 
