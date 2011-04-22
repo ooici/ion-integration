@@ -61,7 +61,11 @@ class IntTestAIS(ItvTestCase):
 
     @defer.inlineCallbacks
     def test_createDataResource(self):
+        yield self._createDataResource()
 
+    @defer.inlineCallbacks
+    def _createDataResource(self):
+        
         ais_req_msg     = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
         self.failIfEqual(type(ais_req_msg), type(0), "ais_req_msg is weird")
 
@@ -95,8 +99,20 @@ class IntTestAIS(ItvTestCase):
         yield self._checkFieldAcceptance(create_req_msg)
 
         create_req_msg.ClearField("base_url")
-        yield self._checkFieldAcceptance(create_req_msg)
 
+
+        #should be ready for actual action
+        result = yield self.aisc.createDataResource(req_msg)
+
+        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_MSG_TYPE)
+
+        #fixme: look up resource from returned id
+        #fixme: check that fields match what we put in
+        #fixme: check the association
+        
+        defer.returnValue(result)
+
+                             
 
     @defer.inlineCallbacks
     def _checkFieldAcceptance(self, req_msg):
