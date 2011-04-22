@@ -37,6 +37,7 @@
    <target name="clean-more" >
     <delete>
       <fileset dir="${pysrc}" includes="**/*.pyc"/>
+      <fileset dir="tests" includes="**/*.pyc"/>
     </delete>
     <delete dir="${pybuild}"/>
     <delete dir="${pydist}"/>
