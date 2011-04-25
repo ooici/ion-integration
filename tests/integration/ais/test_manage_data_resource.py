@@ -15,7 +15,8 @@ from ion.core.exception import ReceivedApplicationError
 from ion.util import procutils as pu
 
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
-from ion.services.coi.resource_registry_beta.resource_client import ResourceClient
+from ion.integration.ais.manage_data_resource.manage_data_resource import DEFAULT_MAX_INGEST_MILLIS
+from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.core.messaging.message_client import MessageClient
 from ion.core.process.process import Process
 
@@ -60,18 +61,90 @@ class IntTestAIS(ItvTestCase):
 
 
     @defer.inlineCallbacks
-    def test_createDataResource(self):
+    def notest_createDataResource(self):
         yield self._createDataResource()
 
     @defer.inlineCallbacks
-    def _createDataResource(self):
+    def test_createDeleteDataResource(self):
+        #run the create
+        create_resp = yield self._createDataResource()
         
-        ais_req_msg     = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
-        self.failIfEqual(type(ais_req_msg), type(0), "ais_req_msg is weird")
+        #try the delete
+        yield self._deleteDataResource(create_resp.data_source_id)
 
+    @defer.inlineCallbacks
+    def notest_deleteDataResourceNull(self):
+        """ 
+        run through the delete code but don't specify any ids.
+        """
+
+        log.info("Trying to call deleteDataResource with the wrong GPB")
+        ais_req_msg  = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
+        result       = yield self.aisc.deleteDataResource(ais_req_msg)
+
+        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE, 
+                             "deleteDataResource accepted a GPB that was known to be the wrong type")
+        
+        log.info("Trying to call deleteDataResource with an empty GPB")
+        delete_req_msg  = yield self.mc.create_instance(DELETE_DATA_RESOURCE_REQ_TYPE)
+        result_wrapped = yield self.aisc.deleteDataResource(delete_req_msg)
+        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_ERROR_TYPE, 
+                             "deleteDataResource accepted a GPB without a data_source_resource_id list")
+
+# doesn't seem to work because GPBs treat [] and "None" as the same thing
+#         log.info("Trying to call deleteDataResource with no ids")
+#         delete_req_msg.data_source_resouce_id.append("TEMP")
+#         delete_req_msg.data_source_resource_id.pop()
+#         result_wrapped = yield self.aisc.deleteDataResource(delete_req_msg)
+#         self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE, 
+#                              "deleteDataResource accepted a GPB without a data_source_resource_id list")
+
+#         log.info("checking number of AIS returns")
+#         self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference), 
+#                              "deleteDataResource returned a GPB with too many 'message_parameters_reference's")
+
+#         log.info("checking number of deleted ids") # (we deleted none, so should be zero!)
+#         result = result_wrapped.message_parameters_reference[0]
+#         self.failUnlessEqual(0, len(result.successfully_deleted_id),
+#                              "We didn't ask for a deletion but apparently one happened...")
+
+
+
+    @defer.inlineCallbacks
+    def _deleteDataResource(self, data_source_id):
+        
+        delete_req_msg  = yield self.mc.create_instance(DELETE_DATA_RESOURCE_REQ_TYPE)
+
+        delete_req_msg.data_source_resource_id.append(data_source_id)
+
+        
+        result_wrapped = yield self.aisc.deleteDataResource(delete_req_msg)
+
+        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE,
+                             "deleteDataResource had an internal failure")
+
+        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference), 
+                             "deleteDataResource returned a GPB with too many 'message_parameters_reference's")
+
+        result = result_wrapped.message_parameters_reference[0]
+
+        #check number of deleted ids (we deleted one, so should be one!)
+        result = result_wrapped.message_parameters_reference[0]
+        num_deletions = len(result.successfully_deleted_id)
+        self.failUnlessEqual(1, num_deletions, "Expected 1 deletion, got " + str(num_deletions))
+        
+
+        
+        defer.returnValue(None)
+        
+
+
+    @defer.inlineCallbacks
+    def _createDataResource(self):
 
         #use the wrong type of GPB
-        result = yield self.aisc.createDataResource(ais_req_msg)
+        ais_req_msg  = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
+        result       = yield self.aisc.createDataResource(ais_req_msg)
 
         self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE, 
                              "createDataResource accepted a GPB that was known to be the wrong type")
@@ -80,7 +153,7 @@ class IntTestAIS(ItvTestCase):
         create_req_msg  = yield self.mc.create_instance(CREATE_DATA_RESOURCE_REQ_TYPE)
 
         #test empty (fields missing) GPB
-        yield self._checkFieldAcceptance(create_req_msg)
+        yield self._checkCreateFieldAcceptance(create_req_msg)
 
         #test full field set but no URLs
         create_req_msg.user_id                       = "A3D5D4A0-7265-4EF2-B0AD-3CE2DC7252D8"
@@ -91,31 +164,60 @@ class IntTestAIS(ItvTestCase):
         create_req_msg.update_start_datetime_millis  = 30000
         create_req_msg.ion_title                     = "some lame title"
         create_req_msg.update_interval_seconds       = 3600
-        yield self._checkFieldAcceptance(create_req_msg)
+        yield self._checkCreateFieldAcceptance(create_req_msg)
 
         #test too many URLs
         create_req_msg.base_url     = "FIXME"
         create_req_msg.dataset_url  = "http://thredds1.pfeg.noaa.gov/thredds/dodsC/satellite/GR/ssta/1day"
-        yield self._checkFieldAcceptance(create_req_msg)
+        yield self._checkCreateFieldAcceptance(create_req_msg)
 
         create_req_msg.ClearField("base_url")
 
 
-        #should be ready for actual action
-        result = yield self.aisc.createDataResource(req_msg)
+        #should be ready for actual call that we expect to succeed
+        result_wrapped = yield self.aisc.createDataResource(create_req_msg)
 
-        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_MSG_TYPE)
+        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE,
+                             "createDataResource had an internal failure")
+        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference), 
+                             "createDataResource returned a GPB with too many 'message_parameters_reference's")
 
-        #fixme: look up resource from returned id
-        #fixme: check that fields match what we put in
-        #fixme: check the association
+        result = result_wrapped.message_parameters_reference[0]
+
+        log.info("received data_source_id : " + result.data_source_id)
+        log.info("received data_set_id    : " + result.data_set_id)
+        log.info("received association_id : " + result.association_id)
+
+        #look up resource to compare with fields from original
+        datasource_resource = yield self.rc.get_instance(result.data_source_id)
+
+        self.failUnlessEqual(result.data_source_id, datasource_resource.ResourceIdentity, 
+                             "Resource ID doesn't match what we created the resource from... STRANGE")
+
+        cm = create_req_msg
+        dr = datasource_resource
+
+
+        self.failUnlessEqual(cm.source_type,                   dr.source_type)
+        self.failUnlessEqual(cm.request_type,                  dr.request_type)
+        self.failUnlessEqual(cm.ion_description,               dr.ion_description)
+        self.failUnlessEqual(cm.ion_institution_id,            dr.ion_institution_id)
+        self.failUnlessEqual(cm.update_start_datetime_millis,  dr.update_start_datetime_millis)
+        self.failUnlessEqual(cm.ion_title,                     dr.ion_title)
+        self.failUnlessEqual(cm.dataset_url,                   dr.dataset_url)
+        
+        #test default value for max ingest millis
+        self.failUnlessEqual(DEFAULT_MAX_INGEST_MILLIS,        dr.max_ingest_millis)
+
+        #fixme, check association with cm.user_id ... but resource registry handles this
+        #fixme: check the association with dataset
         
         defer.returnValue(result)
 
                              
 
     @defer.inlineCallbacks
-    def _checkFieldAcceptance(self, req_msg):
+    def _checkCreateFieldAcceptance(self, req_msg):
         
         result = yield self.aisc.createDataResource(req_msg)
         self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE, 
@@ -123,5 +225,6 @@ class IntTestAIS(ItvTestCase):
         
         defer.returnValue(None)
         
+
         
         
