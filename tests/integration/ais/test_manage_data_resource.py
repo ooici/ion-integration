@@ -65,16 +65,96 @@ class IntTestAIS(ItvTestCase):
         yield self._createDataResource()
 
     @defer.inlineCallbacks
-    def test_createDeleteDataResource(self):
+    def notest_createDeleteDataResource(self):
         #run the create
         create_resp = yield self._createDataResource()
-        
+
         #try the delete
         yield self._deleteDataResource(create_resp.data_source_id)
 
+
     @defer.inlineCallbacks
-    def notest_deleteDataResourceNull(self):
-        """ 
+    def test_updateDataResourceNull(self):
+        """
+        run through the delete code but don't specify any ids.
+        """
+
+        log.info("Trying to call updateDataResource with the wrong GPB")
+        ais_req_msg  = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
+        result       = yield self.aisc.updateDataResource(ais_req_msg)
+
+        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE,
+                             "updateDataResource accepted a GPB that was known to be the wrong type")
+
+        log.info("Trying to call updateDataResource with an empty GPB")
+        update_req_msg  = yield self.mc.create_instance(UPDATE_DATA_RESOURCE_REQ_TYPE)
+        result_wrapped = yield self.aisc.updateDataResource(update_req_msg)
+        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_ERROR_TYPE,
+                             "updateDataResource accepted a GPB without a data_source_resource_id")
+
+
+    @defer.inlineCallbacks
+    def test_updateDataResource(self):
+        """
+        try updating one of the preloaded data sources
+        """
+
+        log.info("Fetching a sample data resource manually to find out what's in it")
+        initial_resource = yield self.rc.get_instance(SAMPLE_PROFILE_DATA_SOURCE_ID)
+
+        b4_max_ingest_millis        = initial_resource.max_ingest_millis
+        b4_update_interval_seconds  = initial_resource.update_interval_seconds
+        b4_ion_institution_id       = initial_resource.ion_institution_id
+        b4_ion_description          = initial_resource.ion_description
+
+        log.info("Original values are %d, %d, %s, %s" % (b4_max_ingest_millis,
+                                                         b4_update_interval_seconds,
+                                                         b4_ion_institution_id,
+                                                         b4_ion_description))
+        
+        fr_max_ingest_millis        = b4_max_ingest_millis + 1
+        fr_update_interval_seconds  = b4_update_interval_seconds + 1
+        fr_ion_institution_id       = b4_ion_institution_id + "_updated"
+        fr_ion_description          = b4_ion_description + "_updated"
+
+
+        log.info("Updating the resource based on what we found")
+        log.info("new values will be %d, %d, %s, %s" % (fr_max_ingest_millis,
+                                                        fr_update_interval_seconds,
+                                                        fr_ion_institution_id,
+                                                        fr_ion_description))
+        update_req_msg  = yield self.mc.create_instance(UPDATE_DATA_RESOURCE_REQ_TYPE)
+        update_req_msg.data_source_resource_id  = SAMPLE_PROFILE_DATA_SOURCE_ID
+        update_req_msg.max_ingest_millis        = fr_max_ingest_millis
+        update_req_msg.update_interval_seconds  = fr_update_interval_seconds
+        update_req_msg.ion_institution_id       = fr_ion_institution_id
+        update_req_msg.ion_description          = fr_ion_description
+
+        #actual update call
+        result_wrapped = yield self.aisc.updateDataResource(update_req_msg)
+
+        log.info("Analyzing results of updateDataResource call")
+        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE,
+                             "updateDataResource had an internal failure")
+        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference),
+                             "updateDataResource returned a GPB with wrong number of 'message_parameters_reference's")
+        
+        #unpack result and dig deeper
+        result = result_wrapped.message_parameters_reference[0]
+        self.failUnlessEqual(result.success, True, "updateDataResource didn't report success")
+
+        #look up resource to compare with fields from original
+        updated_resource = yield self.rc.get_instance(SAMPLE_PROFILE_DATA_SOURCE_ID)
+        self.failUnlessEqual(fr_max_ingest_millis        , updated_resource.max_ingest_millis)
+        self.failUnlessEqual(fr_update_interval_seconds  , updated_resource.update_interval_seconds)
+        self.failUnlessEqual(fr_ion_institution_id       , updated_resource.ion_institution_id)
+        self.failUnlessEqual(fr_ion_description          , updated_resource.ion_description)
+
+
+
+    @defer.inlineCallbacks
+    def test_deleteDataResourceNull(self):
+        """
         run through the delete code but don't specify any ids.
         """
 
@@ -82,13 +162,13 @@ class IntTestAIS(ItvTestCase):
         ais_req_msg  = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
         result       = yield self.aisc.deleteDataResource(ais_req_msg)
 
-        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE, 
+        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE,
                              "deleteDataResource accepted a GPB that was known to be the wrong type")
-        
+
         log.info("Trying to call deleteDataResource with an empty GPB")
         delete_req_msg  = yield self.mc.create_instance(DELETE_DATA_RESOURCE_REQ_TYPE)
         result_wrapped = yield self.aisc.deleteDataResource(delete_req_msg)
-        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_ERROR_TYPE, 
+        self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_ERROR_TYPE,
                              "deleteDataResource accepted a GPB without a data_source_resource_id list")
 
 # doesn't seem to work because GPBs treat [] and "None" as the same thing
@@ -96,11 +176,11 @@ class IntTestAIS(ItvTestCase):
 #         delete_req_msg.data_source_resouce_id.append("TEMP")
 #         delete_req_msg.data_source_resource_id.pop()
 #         result_wrapped = yield self.aisc.deleteDataResource(delete_req_msg)
-#         self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE, 
+#         self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE,
 #                              "deleteDataResource accepted a GPB without a data_source_resource_id list")
 
 #         log.info("checking number of AIS returns")
-#         self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference), 
+#         self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference),
 #                              "deleteDataResource returned a GPB with too many 'message_parameters_reference's")
 
 #         log.info("checking number of deleted ids") # (we deleted none, so should be zero!)
@@ -109,21 +189,29 @@ class IntTestAIS(ItvTestCase):
 #                              "We didn't ask for a deletion but apparently one happened...")
 
 
+    @defer.inlineCallbacks
+    def test_deleteDataResourceSample(self):
+        """
+        @brief try to delete one of the sample data sources
+        """
+        yield self._deleteDataResource(SAMPLE_PROFILE_DATA_SOURCE_ID)
+
+
 
     @defer.inlineCallbacks
     def _deleteDataResource(self, data_source_id):
-        
+
         delete_req_msg  = yield self.mc.create_instance(DELETE_DATA_RESOURCE_REQ_TYPE)
 
         delete_req_msg.data_source_resource_id.append(data_source_id)
 
-        
+
         result_wrapped = yield self.aisc.deleteDataResource(delete_req_msg)
 
         self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE,
                              "deleteDataResource had an internal failure")
 
-        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference), 
+        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference),
                              "deleteDataResource returned a GPB with too many 'message_parameters_reference's")
 
         result = result_wrapped.message_parameters_reference[0]
@@ -131,12 +219,17 @@ class IntTestAIS(ItvTestCase):
         #check number of deleted ids (we deleted one, so should be one!)
         result = result_wrapped.message_parameters_reference[0]
         num_deletions = len(result.successfully_deleted_id)
-        self.failUnlessEqual(1, num_deletions, "Expected 1 deletion, got " + str(num_deletions))
-        
+        self.failUnlessEqual(1, num_deletions, 
+                             "Expected 1 deletion, got " + str(num_deletions))
 
-        
+        #check that it's gone
+        dsrc = yield self.rc.get_instance(data_source_id)
+        self.failUnlessEqual(dsrc.ResourceLifeCycleState, dsrc.RETIRED, 
+                             "deleteDataResource apparently didn't mark anything retired")
+
         defer.returnValue(None)
-        
+
+
 
 
     @defer.inlineCallbacks
@@ -146,9 +239,9 @@ class IntTestAIS(ItvTestCase):
         ais_req_msg  = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
         result       = yield self.aisc.createDataResource(ais_req_msg)
 
-        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE, 
+        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE,
                              "createDataResource accepted a GPB that was known to be the wrong type")
-            
+
 
         create_req_msg  = yield self.mc.create_instance(CREATE_DATA_RESOURCE_REQ_TYPE)
 
@@ -179,7 +272,7 @@ class IntTestAIS(ItvTestCase):
 
         self.failUnlessEqual(result_wrapped.MessageType, AIS_RESPONSE_MSG_TYPE,
                              "createDataResource had an internal failure")
-        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference), 
+        self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference),
                              "createDataResource returned a GPB with too many 'message_parameters_reference's")
 
         result = result_wrapped.message_parameters_reference[0]
@@ -191,7 +284,7 @@ class IntTestAIS(ItvTestCase):
         #look up resource to compare with fields from original
         datasource_resource = yield self.rc.get_instance(result.data_source_id)
 
-        self.failUnlessEqual(result.data_source_id, datasource_resource.ResourceIdentity, 
+        self.failUnlessEqual(result.data_source_id, datasource_resource.ResourceIdentity,
                              "Resource ID doesn't match what we created the resource from... STRANGE")
 
         cm = create_req_msg
@@ -205,26 +298,26 @@ class IntTestAIS(ItvTestCase):
         self.failUnlessEqual(cm.update_start_datetime_millis,  dr.update_start_datetime_millis)
         self.failUnlessEqual(cm.ion_title,                     dr.ion_title)
         self.failUnlessEqual(cm.dataset_url,                   dr.dataset_url)
-        
+
         #test default value for max ingest millis
         self.failUnlessEqual(DEFAULT_MAX_INGEST_MILLIS,        dr.max_ingest_millis)
 
         #fixme, check association with cm.user_id ... but resource registry handles this
         #fixme: check the association with dataset
-        
+
         defer.returnValue(result)
 
-                             
+
 
     @defer.inlineCallbacks
     def _checkCreateFieldAcceptance(self, req_msg):
-        
-        result = yield self.aisc.createDataResource(req_msg)
-        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE, 
-                             "createDataResource accepted a GPB that was known to be lacking data")
-        
-        defer.returnValue(None)
-        
 
-        
-        
+        result = yield self.aisc.createDataResource(req_msg)
+        self.failUnlessEqual(result.MessageType, AIS_RESPONSE_ERROR_TYPE,
+                             "createDataResource accepted a GPB that was known to be lacking data")
+
+        defer.returnValue(None)
+
+
+
+
