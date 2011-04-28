@@ -13,12 +13,19 @@ from ion.test.iontest import ItvTestCase
 from ion.core import ioninit
 from ion.core.exception import ReceivedApplicationError
 from ion.util import procutils as pu
+from ion.core.object import object_utils
 
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
 from ion.integration.ais.manage_data_resource.manage_data_resource import DEFAULT_MAX_INGEST_MILLIS
 from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.core.messaging.message_client import MessageClient
+from ion.services.coi.resource_registry.association_client import AssociationClient
 from ion.core.process.process import Process
+
+from ion.services.coi.datastore_bootstrap.ion_preload_config import HAS_A_ID, \
+                                                                    TYPE_OF_ID, \
+                                                                    DATASET_RESOURCE_TYPE_ID, \
+                                                                    DATASOURCE_RESOURCE_TYPE_ID
 
 from ion.integration.ais.ais_object_identifiers import AIS_RESPONSE_MSG_TYPE, \
                                                        AIS_REQUEST_MSG_TYPE, \
@@ -53,7 +60,7 @@ class IntTestAIS(ItvTestCase):
         self.aisc  = AppIntegrationServiceClient(proc=proc)
         self.rc    = ResourceClient(proc=proc)
         self.mc    = MessageClient(proc=proc)
-
+        self.ac    = AssociationClient(proc=proc)
 
     @defer.inlineCallbacks
     def tearDown(self):
@@ -61,11 +68,11 @@ class IntTestAIS(ItvTestCase):
 
 
     @defer.inlineCallbacks
-    def notest_createDataResource(self):
+    def test_createDataResource(self):
         yield self._createDataResource()
 
     @defer.inlineCallbacks
-    def notest_createDeleteDataResource(self):
+    def test_createDeleteDataResource(self):
         #run the create
         create_resp = yield self._createDataResource()
 
@@ -111,7 +118,7 @@ class IntTestAIS(ItvTestCase):
                                                          b4_update_interval_seconds,
                                                          b4_ion_institution_id,
                                                          b4_ion_description))
-        
+
         fr_max_ingest_millis        = b4_max_ingest_millis + 1
         fr_update_interval_seconds  = b4_update_interval_seconds + 1
         fr_ion_institution_id       = b4_ion_institution_id + "_updated"
@@ -138,7 +145,7 @@ class IntTestAIS(ItvTestCase):
                              "updateDataResource had an internal failure")
         self.failUnlessEqual(1, len(result_wrapped.message_parameters_reference),
                              "updateDataResource returned a GPB with wrong number of 'message_parameters_reference's")
-        
+
         #unpack result and dig deeper
         result = result_wrapped.message_parameters_reference[0]
         self.failUnlessEqual(result.success, True, "updateDataResource didn't report success")
@@ -219,12 +226,12 @@ class IntTestAIS(ItvTestCase):
         #check number of deleted ids (we deleted one, so should be one!)
         result = result_wrapped.message_parameters_reference[0]
         num_deletions = len(result.successfully_deleted_id)
-        self.failUnlessEqual(1, num_deletions, 
+        self.failUnlessEqual(1, num_deletions,
                              "Expected 1 deletion, got " + str(num_deletions))
 
         #check that it's gone
         dsrc = yield self.rc.get_instance(data_source_id)
-        self.failUnlessEqual(dsrc.ResourceLifeCycleState, dsrc.RETIRED, 
+        self.failUnlessEqual(dsrc.ResourceLifeCycleState, dsrc.RETIRED,
                              "deleteDataResource apparently didn't mark anything retired")
 
         defer.returnValue(None)
@@ -303,7 +310,20 @@ class IntTestAIS(ItvTestCase):
         self.failUnlessEqual(DEFAULT_MAX_INGEST_MILLIS,        dr.max_ingest_millis)
 
         #fixme, check association with cm.user_id ... but resource registry handles this
-        #fixme: check the association with dataset
+
+        log.info("checking association between data source and data set")
+        found = yield self.ac.find_associations(subject=dr, \
+                                                    predicate_or_predicates=HAS_A_ID)
+
+        association = None
+        for a in found:
+            mystery_resource = yield self.rc.get_instance(a.ObjectReference.key)
+            if DATASET_RESOURCE_TYPE_ID == mystery_resource.ResourceTypeID.key:
+                self.failUnlessEqual(None, association, "More than one data set associated to source!")
+                association = a
+
+        #this is an error case!
+        self.failIfEqual(None, association, "Dataset association to data source wasn't found")
 
         defer.returnValue(result)
 
