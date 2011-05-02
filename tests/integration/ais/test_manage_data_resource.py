@@ -25,7 +25,8 @@ from ion.core.process.process import Process
 from ion.services.coi.datastore_bootstrap.ion_preload_config import HAS_A_ID, \
                                                                     TYPE_OF_ID, \
                                                                     DATASET_RESOURCE_TYPE_ID, \
-                                                                    DATASOURCE_RESOURCE_TYPE_ID
+                                                                    DATASOURCE_RESOURCE_TYPE_ID, \
+                                                                    DATARESOURCE_SCHEDULE_TYPE_ID
 
 from ion.integration.ais.ais_object_identifiers import AIS_RESPONSE_MSG_TYPE, \
                                                        AIS_REQUEST_MSG_TYPE, \
@@ -306,7 +307,7 @@ class IntTestAIS(ItvTestCase):
         log.info("received data_set_id    : " + result.data_set_id)
         log.info("received association_id : " + result.association_id)
 
-        #look up resource to compare with fields from original
+        log.info("looking up resource we just added")
         datasource_resource = yield self.rc.get_instance(result.data_source_id)
 
         self.failUnlessEqual(result.data_source_id, datasource_resource.ResourceIdentity,
@@ -315,7 +316,7 @@ class IntTestAIS(ItvTestCase):
         cm = create_req_msg
         dr = datasource_resource
 
-
+        log.info("comparing resource with fields from original request")
         self.failUnlessEqual(cm.source_type,                   dr.source_type)
         self.failUnlessEqual(cm.request_type,                  dr.request_type)
         self.failUnlessEqual(cm.ion_description,               dr.ion_description)
@@ -327,21 +328,21 @@ class IntTestAIS(ItvTestCase):
         #test default value for max ingest millis
         self.failUnlessEqual(DEFAULT_MAX_INGEST_MILLIS,        dr.max_ingest_millis)
 
-        #fixme, check association with cm.user_id ... but resource registry handles this
+        #fixme, check association with cm.user_id ... but resource registry handles this?
 
-        log.info("checking association between data source and data set")
-        associations = yield self._getAssociatedObjects(dr, HAS_A_ID, DATASET_RESOURCE_TYPE_ID)
-        self.failUnlessEqual(len(associations), 1, 
-                             "got %d associated data sets instead of 1!" % len(associations))
-
-        # FIXME: not sure what to use for data_resource_scheduled_task_type
-        #log.info("checking association between data source and scheduled task")
-        #associations = yield self._getAssociatedObjects(dr, HAS_A_ID, DATA_RESOURCE_SCHEDULED_TASK_TYPE)
-        #self.failUnlessEqual(len(associations), 1, 
-        #                     "got %d associated scheduler tasks instead of 1!" % len(associations))
+        yield self._checkAssociatedQuantities(dr, DATASET_RESOURCE_TYPE_ID, "data set", 1)
+        yield self._checkAssociatedQuantities(dr, DATARESOURCE_SCHEDULE_TYPE_ID, "scheduled task", 1)
 
         defer.returnValue(result)
 
+
+    @defer.inlineCallbacks
+    def _checkAssociatedQuantities(self, some_data_resource, type, type_name, expected):
+        log.info("checking association between data source and " + type_name)
+        associations = yield self._getAssociatedObjects(some_data_resource, HAS_A_ID, DATARESOURCE_SCHEDULE_TYPE_ID)
+        self.failUnlessEqual(len(associations), expected, 
+                             "got %d associated scheduler tasks instead of %d!" % (len(associations), expected))
+        defer.returnValue(None)
 
 
     @defer.inlineCallbacks
