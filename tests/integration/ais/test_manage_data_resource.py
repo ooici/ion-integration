@@ -40,12 +40,14 @@ from ion.integration.ais.ais_object_identifiers import AIS_RESPONSE_MSG_TYPE, \
                                                        DATA_RESOURCE_SCHEDULED_TASK_TYPE
 
 
-from ion.services.coi.datastore_bootstrap.ion_preload_config import SAMPLE_PROFILE_DATASET_ID, SAMPLE_PROFILE_DATA_SOURCE_ID
+from ion.services.coi.datastore_bootstrap.ion_preload_config import SAMPLE_PROFILE_DATASET_ID, \
+                                                                    SAMPLE_PROFILE_DATA_SOURCE_ID, \
+                                                                    SAMPLE_STATION_DATA_SOURCE_ID
 
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
 
-class IntTestAIS(ItvTestCase):
+class IntTestAisManageDataResource(ItvTestCase):
 
     app_dependencies = [
                 # release file for r1
@@ -81,6 +83,20 @@ class IntTestAIS(ItvTestCase):
         #try the delete
         yield self._deleteDataResource(create_resp.data_source_id)
 
+    @defer.inlineCallbacks
+    def test_createUpdateDeleteDataResource(self):
+        #run the create
+        log.info("FULL USAGE 1/3: create")
+        create_resp = yield self._createDataResource()
+
+        #run the update 
+        log.info("FULL USAGE 2/3: update")
+        yield self._updateDataResource(create_resp.data_source_id)
+
+        #try the delete
+        log.info("FULL USAGE 3/3: delete")
+        yield self._deleteDataResource(create_resp.data_source_id)
+
 
     @defer.inlineCallbacks
     def test_updateDataResourceNull(self):
@@ -105,35 +121,51 @@ class IntTestAIS(ItvTestCase):
 
 
     @defer.inlineCallbacks
-    def test_updateDataResource(self):
+    def test_updateDataResourceSample(self):
         """
         try updating one of the preloaded data sources
         """
 
-        log.info("Fetching a sample data resource manually to find out what's in it")
-        initial_resource = yield self.rc.get_instance(SAMPLE_PROFILE_DATA_SOURCE_ID)
+        log.info("Updating a sample data resource")
+        yield self._updateDataResource(SAMPLE_PROFILE_DATA_SOURCE_ID)
+
+
+    @defer.inlineCallbacks
+    def _updateDataResource(self, data_source_resource_id):
+        log.info("_updateDataResource(%s) " % data_source_resource_id)
+
+        initial_resource = yield self.rc.get_instance(data_source_resource_id)
+        log.info("Fetching the data resource manually to find out what's in it")
 
         #before 
-        b4_max_ingest_millis        = initial_resource.max_ingest_millis
-        b4_update_interval_seconds  = initial_resource.update_interval_seconds
-        b4_ion_institution_id       = initial_resource.ion_institution_id
-        b4_ion_description          = initial_resource.ion_description
-        log.info("Original values are %d, %d, %s, %s" % (b4_max_ingest_millis,
-                                                         b4_update_interval_seconds,
-                                                         b4_ion_institution_id,
-                                                         b4_ion_description))
+        b4_max_ingest_millis            = initial_resource.max_ingest_millis
+        b4_update_interval_seconds      = initial_resource.update_interval_seconds
+        b4_update_start_datetime_millis = initial_resource.update_start_datetime_millis
+        b4_ion_title                    = initial_resource.ion_title
+        #b4_ion_institution_id           = initial_resource.ion_institution_id
+        b4_ion_description              = initial_resource.ion_description
+        log.info("Original values are %d, %d, %d, %s, %s" % (b4_max_ingest_millis,
+                                                             b4_update_interval_seconds,
+                                                             b4_update_start_datetime_millis,
+                                                             #b4_ion_institution_id,
+                                                             b4_ion_title,
+                                                             b4_ion_description))
 
         log.info("Updating the resource based on what we found")
-        fr_max_ingest_millis        = b4_max_ingest_millis + 1
-        fr_update_interval_seconds  = b4_update_interval_seconds + 1
-        fr_ion_institution_id       = b4_ion_institution_id + "_updated"
-        fr_ion_description          = b4_ion_description + "_updated"
+        fr_max_ingest_millis            = b4_max_ingest_millis + 1
+        fr_update_interval_seconds      = b4_update_interval_seconds + 1
+        fr_update_start_datetime_millis = b4_update_start_datetime_millis + 1
+        #fr_ion_institution_id           = b4_ion_institution_id + "_updated"
+        fr_ion_title                    = b4_ion_title + "_updated"
+        fr_ion_description              = b4_ion_description + "_updated"
 
 
-        log.info("new values will be %d, %d, %s, %s" % (fr_max_ingest_millis,
-                                                        fr_update_interval_seconds,
-                                                        fr_ion_institution_id,
-                                                        fr_ion_description))
+        log.info("new values will be %d, %d, %d, %s, %s" % (fr_max_ingest_millis,
+                                                            fr_update_interval_seconds,
+                                                            fr_update_start_datetime_millis,
+                                                            #fr_ion_institution_id,
+                                                            fr_ion_title,
+                                                            fr_ion_description))
 
         log.info("Creating and wrapping update request message")
         ais_req_msg  = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
@@ -141,11 +173,13 @@ class IntTestAIS(ItvTestCase):
         ais_req_msg.message_parameters_reference = update_req_msg
 
         #what we want it to be
-        update_req_msg.data_source_resource_id  = SAMPLE_PROFILE_DATA_SOURCE_ID
-        update_req_msg.max_ingest_millis        = fr_max_ingest_millis
-        update_req_msg.update_interval_seconds  = fr_update_interval_seconds
-        update_req_msg.ion_institution_id       = fr_ion_institution_id
-        update_req_msg.ion_description          = fr_ion_description
+        update_req_msg.data_source_resource_id      = SAMPLE_PROFILE_DATA_SOURCE_ID
+        update_req_msg.max_ingest_millis            = fr_max_ingest_millis
+        update_req_msg.update_interval_seconds      = fr_update_interval_seconds
+        update_req_msg.update_start_datetime_millis = fr_update_start_datetime_millis
+        #update_req_msg.ion_institution_id           = fr_ion_institution_id
+        update_req_msg.ion_title                    = fr_ion_title
+        update_req_msg.ion_description              = fr_ion_description
 
         #actual update call
         result_wrapped = yield self.aisc.updateDataResource(ais_req_msg)
@@ -163,10 +197,12 @@ class IntTestAIS(ItvTestCase):
 
         #look up resource to compare with fields from original
         updated_resource = yield self.rc.get_instance(SAMPLE_PROFILE_DATA_SOURCE_ID)
-        self.failUnlessEqual(fr_max_ingest_millis        , updated_resource.max_ingest_millis)
-        self.failUnlessEqual(fr_update_interval_seconds  , updated_resource.update_interval_seconds)
-        self.failUnlessEqual(fr_ion_institution_id       , updated_resource.ion_institution_id)
-        self.failUnlessEqual(fr_ion_description          , updated_resource.ion_description)
+        self.failUnlessEqual(fr_max_ingest_millis             , updated_resource.max_ingest_millis)
+        self.failUnlessEqual(fr_update_interval_seconds       , updated_resource.update_interval_seconds)
+        self.failUnlessEqual(fr_update_start_datetime_millis  , updated_resource.update_start_datetime_millis)
+        #self.failUnlessEqual(fr_ion_institution_id            , updated_resource.ion_institution_id)
+        self.failUnlessEqual(fr_ion_title                     , updated_resource.ion_title)
+        self.failUnlessEqual(fr_ion_description               , updated_resource.ion_description)
 
 
 
@@ -213,7 +249,8 @@ class IntTestAIS(ItvTestCase):
         """
         @brief try to delete one of the sample data sources
         """
-        yield self._deleteDataResource(SAMPLE_PROFILE_DATA_SOURCE_ID)
+        #yield self._deleteDataResource(SAMPLE_PROFILE_DATA_SOURCE_ID)
+        yield self._deleteDataResource(SAMPLE_STATION_DATA_SOURCE_ID)
 
 
 
