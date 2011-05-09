@@ -13,4 +13,6 @@ bin/
 .settings/override-repo
 build
 lib
+res/logging/loglevelslocal.cfg
+
 
