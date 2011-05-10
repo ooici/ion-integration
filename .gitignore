@@ -14,5 +14,6 @@ bin/
 build
 lib
 res/logging/loglevelslocal.cfg
+res/config/ionlocal.config
 
 
