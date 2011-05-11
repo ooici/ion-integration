@@ -25,7 +25,8 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
     , 'short': '%(major)s.%(minor)s.%(micro)s'
     , 'setup-py': "version = '%(major)s.%(minor)s.%(micro)s',"
-    , 'setup-py-proto': "'ionproto==%(major)s.%(minor)s.%(micro)s',"
+    , 'setup-py-proto-equal': "'ionproto==%(major)s.%(minor)s.%(micro)s',"
+    , 'setup-py-proto-greater': "'ionproto>=%(major)s.%(minor)s.%(micro)s',"
 }
 
 
@@ -211,7 +212,7 @@ def python():
 
     with lcd(os.path.join('..', 'ioncore-python')):
         _showIntro()
-        #_ensureClean()
+        _ensureClean()
 
         with hide('running', 'stdout', 'stderr'):
             currentVersionStr = local('python setup.py --version', capture=True)
@@ -223,14 +224,16 @@ def python():
             versionFile.write(nextVersionStr)
 
         # Force the ionproto version before building the package
-        _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto'], lambda old: protoVersion[0])
+        _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-equal'], lambda old: protoVersion[0])
 
         local('python setup.py sdist')
         local('chmod -R 775 dist')
 
         local('git checkout setup.py')
-
         _deploy('dist/*.tar.gz')
+
+        # Set the ionproto dependency before tagging
+        _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-greater'], lambda old: protoVersion[0])
 
         remote = _gitTag(version)
         #_gitForwardMaster(remote)
