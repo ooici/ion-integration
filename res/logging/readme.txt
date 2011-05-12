@@ -5,8 +5,9 @@
 # Format: list of 2-tuples [('ion.core',DEBUG)]. Module package hierarchy
 # applies. You can set levels on a per-package level.
 # DO NOT CHANGE THIS FILE
-# If you want to override this settings, copy this file to loglevelslocal.cfg
+#
+# If you want to override this settings, copy this file to loglevelslocal.cfg in the same directory
 # and set the levels there.
 [
-    ('ion',DEBUG)),
+    ('ion',DEBUG),
 ]

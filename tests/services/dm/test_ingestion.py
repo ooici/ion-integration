@@ -34,6 +34,9 @@ class IntTestIngest(ItvTestCase):
                 ("res/apps/eoiagent.app", "id=4"),
                 # one resource registry with demodata registered
                 ("res/apps/resources.app", "register=demodata"),
+                # ingestion needs PSC and EMS
+                ("res/apps/ems.app", "id=1"),
+                ("res/apps/pubsub.app", "id=1"),
                 ]
 
     @defer.inlineCallbacks
