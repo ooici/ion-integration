@@ -185,7 +185,7 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     # continue
     local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
     local('ssh %s@%s chmod 775 %s || exit 0' % (scpUser, host, relFileStr))
-    local('ssh %s@%s chgrp teamlead %s' % (scpUser, host, relFileStr))
+    local('ssh %s@%s chgrp teamlead %s || exit 0' % (scpUser, host, relFileStr))
 
 def _showIntro():
     print '''
