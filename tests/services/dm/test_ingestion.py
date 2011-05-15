@@ -23,20 +23,12 @@ class IntTestIngest(ItvTestCase):
 
     app_dependencies = [
                 # four copies of ingest services
-                ("res/apps/ingestion.app", "id=1"),
-                ("res/apps/ingestion.app", "id=2"),
-                ("res/apps/ingestion.app", "id=3"),
-                ("res/apps/ingestion.app", "id=4"),
-                # four copies of JAW
+
                 ("res/apps/eoiagent.app", "id=1"),
-                ("res/apps/eoiagent.app", "id=2"),
-                ("res/apps/eoiagent.app", "id=3"),
-                ("res/apps/eoiagent.app", "id=4"),
-                # one resource registry with demodata registered
-                ("res/apps/resources.app", "register=demodata"),
-                # ingestion needs PSC and EMS
-                ("res/apps/ems.app", "id=1"),
-                ("res/apps/pubsub.app", "id=1"),
+                #("res/apps/eoiagent.app", "id=2"),
+                #("res/apps/eoiagent.app", "id=3"),
+                #("res/apps/eoiagent.app", "id=4"),
+                ("res/deploy/r1deploy.rel", "id=1")
                 ]
 
     @defer.inlineCallbacks
