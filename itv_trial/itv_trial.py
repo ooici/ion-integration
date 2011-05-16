@@ -161,7 +161,8 @@ def main():
     results = {}
 
     for testclass in testset:
-        app_dependencies = {}
+        app_dependencies = []
+        dep_assoc = {}          # associates app deps to test classes
         for x in testclass:
             print str(x), "%s.%s" % (x.__module__, x.__name__)
             if hasattr(x, 'app_dependencies'):
@@ -171,15 +172,20 @@ def main():
                     if not isinstance(y, tuple):
                         y = (y, None)
 
-                    if not app_dependencies.has_key(y):
-                        app_dependencies[y] = []
+                    # add to in order list of app deps
+                    if not y in app_dependencies:
+                        app_dependencies.append(y)
 
-                    app_dependencies[y].append(x)
+                    # add association to class (mostly for debugging only)
+                    if not dep_assoc.has_key(y):
+                        dep_assoc[y] = []
+
+                    dep_assoc[y].append(x)
 
         if len(app_dependencies) > 0:
             print "The following app_dependencies will be started:"
-            for service in app_dependencies.keys():
-                extra = "(%s)" % ",".join([tc.__name__ for tc in app_dependencies[service]])
+            for service in app_dependencies:
+                extra = "(%s)" % ",".join([tc.__name__ for tc in dep_assoc[service]])
                 print "\t", service, extra
 
             if not opts.nopause:
@@ -187,7 +193,7 @@ def main():
                 time.sleep(5)
 
         ccs = []
-        for service in app_dependencies.keys():
+        for service in app_dependencies:
 
             # build serviceargs to pass to service (should be param=value pairs as strings)
             serviceargs=""
