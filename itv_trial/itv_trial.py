@@ -95,12 +95,16 @@ def get_test_classes(testargs, debug=False):
     """
     Gets a set of test classes that will be run.
     Uses the same parsing loader that trial does (which we eventually run).
+
+    @returns    A tuple of all TestCase classes found and all test_ methods found.
     """
     totalsuite = TestLoader().loadByNames(testargs, True)
-    all_testclasses = set()
+    all_testclasses = set()     # a set of all TestCase derived classes we find
+    all_x = set()               # a set of every single test method in the test suite
 
     def walksuite(suite, res):
         for x in suite:
+            all_x.add(x)
             if isinstance(x, ErrorHolder):
                 print "ERROR DETECTED:"
                 x.error.printBriefTraceback()
@@ -117,7 +121,7 @@ def get_test_classes(testargs, debug=False):
 
     walksuite(totalsuite, all_testclasses)
 
-    return all_testclasses
+    return (all_testclasses, all_x)
 
 def build_twistd_args(service, serviceargs, opts, shell=False):
     """
@@ -148,7 +152,10 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
 
 def main():
     opts, args = get_opts()
-    all_testclasses = get_test_classes(args, opts.debug)
+    all_testclasses, all_x = get_test_classes(args, opts.debug)
+
+    if opts.debug:
+        print "\n** SINGLE TEST METHOD SPECIFIED **\n"
 
     if opts.merge:
         # merge all tests into one set
@@ -268,7 +275,12 @@ def main():
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
             if not opts.debug_cc:
-                trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
+
+                # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
+                if len(all_x) == 1:
+                    trialargs = args
+                else:
+                    trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
 
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
