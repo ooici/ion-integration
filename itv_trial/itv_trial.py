@@ -105,7 +105,6 @@ def get_test_classes(testargs, debug=False):
     def walksuite(suite, res):
         for x in suite:
             all_x.add(x)
-            print "HI I AM ", x.__class__, "wat", x
             if isinstance(x, ErrorHolder):
                 print "ERROR DETECTED:"
                 x.error.printBriefTraceback()
