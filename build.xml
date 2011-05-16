@@ -66,7 +66,9 @@
   </target>-->
   
   <target name="get-eoi-agents" description="==> Uses Apache Ivy to retreive the eoi-agents jar (as specified in the ivy.xml file) and all its transitive dependencies">
+  <!-- Remove the ioncore-java directory to allow re-retrieval in case it's referencing a #.#.#-dev version" -->
+  		<delete dir="${ivy.cache.dir}/net.ooici/ioncore-java" />
         <ivy:retrieve sync="true" overwriteMode="always" />
     </target>
-
+    
 </project>

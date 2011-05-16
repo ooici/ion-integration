@@ -95,12 +95,17 @@ def get_test_classes(testargs, debug=False):
     """
     Gets a set of test classes that will be run.
     Uses the same parsing loader that trial does (which we eventually run).
+
+    @returns    A tuple of all TestCase classes found and all test_ methods found.
     """
     totalsuite = TestLoader().loadByNames(testargs, True)
-    all_testclasses = set()
+    all_testclasses = set()     # a set of all TestCase derived classes we find
+    all_x = set()               # a set of every single test method in the test suite
 
     def walksuite(suite, res):
         for x in suite:
+            all_x.add(x)
+            print "HI I AM ", x.__class__, "wat", x
             if isinstance(x, ErrorHolder):
                 print "ERROR DETECTED:"
                 x.error.printBriefTraceback()
@@ -117,7 +122,7 @@ def get_test_classes(testargs, debug=False):
 
     walksuite(totalsuite, all_testclasses)
 
-    return all_testclasses
+    return (all_testclasses, all_x)
 
 def build_twistd_args(service, serviceargs, opts, shell=False):
     """
@@ -148,7 +153,10 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
 
 def main():
     opts, args = get_opts()
-    all_testclasses = get_test_classes(args, opts.debug)
+    all_testclasses, all_x = get_test_classes(args, opts.debug)
+
+    if opts.debug:
+        print "\n** SINGLE TEST METHOD SPECIFIED **\n"
 
     if opts.merge:
         # merge all tests into one set
@@ -161,7 +169,8 @@ def main():
     results = {}
 
     for testclass in testset:
-        app_dependencies = {}
+        app_dependencies = []
+        dep_assoc = {}          # associates app deps to test classes
         for x in testclass:
             print str(x), "%s.%s" % (x.__module__, x.__name__)
             if hasattr(x, 'app_dependencies'):
@@ -171,15 +180,20 @@ def main():
                     if not isinstance(y, tuple):
                         y = (y, None)
 
-                    if not app_dependencies.has_key(y):
-                        app_dependencies[y] = []
+                    # add to in order list of app deps
+                    if not y in app_dependencies:
+                        app_dependencies.append(y)
 
-                    app_dependencies[y].append(x)
+                    # add association to class (mostly for debugging only)
+                    if not dep_assoc.has_key(y):
+                        dep_assoc[y] = []
+
+                    dep_assoc[y].append(x)
 
         if len(app_dependencies) > 0:
             print "The following app_dependencies will be started:"
-            for service in app_dependencies.keys():
-                extra = "(%s)" % ",".join([tc.__name__ for tc in app_dependencies[service]])
+            for service in app_dependencies:
+                extra = "(%s)" % ",".join([tc.__name__ for tc in dep_assoc[service]])
                 print "\t", service, extra
 
             if not opts.nopause:
@@ -187,7 +201,7 @@ def main():
                 time.sleep(5)
 
         ccs = []
-        for service in app_dependencies.keys():
+        for service in app_dependencies:
 
             # build serviceargs to pass to service (should be param=value pairs as strings)
             serviceargs=""
@@ -262,7 +276,12 @@ def main():
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
             if not opts.debug_cc:
-                trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
+
+                # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
+                if len(all_x) == 1:
+                    trialargs = args
+                else:
+                    trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
 
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
