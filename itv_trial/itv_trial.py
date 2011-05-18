@@ -198,7 +198,7 @@ def main():
                 print "Pausing before starting..."
                 time.sleep(5)
 
-        ccs, lockfiles = [], set()
+        ccs = []
         for service in app_dependencies:
 
             # build serviceargs to pass to service (should be param=value pairs as strings)
@@ -215,7 +215,6 @@ def main():
             pidfile = '%s.pid' % (basepath)
             logfile = '%s.log' % (basepath)
             lockfile = '%s.lock' % (basepath)
-            lockfiles.add(lockfile)
             sargs = build_twistd_args(service[0], serviceargs, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
@@ -231,25 +230,21 @@ def main():
             # add to list of open containers
             ccs.append(po)
 
-        if len(app_dependencies) > 0:
-            print "Waiting for containers to spin up..."
+            print "Waiting for container to start:", service[0]
 
-            # Use the lockfiles to know when each one is ready
-            while len(lockfiles):
-                unlockedFiles = set()
-
-                for lockfilepath in lockfiles:
-                    if os.path.exists(lockfilepath):
-                        lockfile = open(lockfilepath, 'w')
-                        result = fcntl.fcntl(lockfile, fcntl.LOCK_EX, os.O_NDELAY)
-                        lockfile.close()
-                        if result == 0:
-                            unlockedFiles.add(lockfilepath)
-                            os.unlink(lockfilepath)
-
-                lockfiles -= unlockedFiles
-                time.sleep(0.1)
-
+            # wait for lockfile to appear
+            while not os.path.exists(lockfile):
+                if opts.debug:
+                    print "\tWaiting for lockfile", lockfile, "to appear"
+                time.sleep(1)
+            else:
+                # ok, lock file is up - wait until os tells us it is unlocked
+                    lfh = open(lockfile, 'w')
+                    print "\tLockfile appeared, waiting for container unlock..."
+                    result = fcntl.lockf(lfh, fcntl.LOCK_EX) #, os.O_NDELAY)
+                    print "\tUnlocked!"
+                    lfh.close()
+                    os.unlink(lockfile)
 
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
