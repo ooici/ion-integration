@@ -69,6 +69,7 @@ from uuid import uuid4
 import subprocess
 import optparse
 import sys
+import fcntl
 
 def gen_sysname():
     return str(uuid4())[:6]     # gen uuid, use at most 6 chars
@@ -123,7 +124,7 @@ def get_test_classes(testargs, debug=False):
 
     return (all_testclasses, all_x)
 
-def build_twistd_args(service, serviceargs, opts, shell=False):
+def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, shell=False):
     """
     Returns an array suitable for spawning a twistd cc container.
     """
@@ -132,11 +133,9 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
     if len(serviceargs) > 0:
         extraargs += "," + serviceargs
 
-    # temporary log/pid path
-    tf = os.path.join(tempfile.gettempdir(), "cc-" + str(uuid4()))
-
     # build command line
-    sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-h", opts.hostname]
+    sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile, "cc", "-h", opts.hostname]
+    sargs += ["--lockfile", lockfile]
     if not shell:
         sargs.append("-n")
     sargs.append("-a")
@@ -199,7 +198,7 @@ def main():
                 print "Pausing before starting..."
                 time.sleep(5)
 
-        ccs = []
+        ccs, lockfiles = [], set()
         for service in app_dependencies:
 
             # build serviceargs to pass to service (should be param=value pairs as strings)
@@ -211,7 +210,13 @@ def main():
                 serviceargs = ",".join(params)
 
             # build command line
-            sargs = build_twistd_args(service[0], serviceargs, opts)
+            uniqueid = uuid4()
+            basepath = os.path.join(tempfile.gettempdir(), 'cc-%s' % (str(uniqueid)))
+            pidfile = '%s.pid' % (basepath)
+            logfile = '%s.log' % (basepath)
+            lockfile = '%s.lock' % (basepath)
+            lockfiles.add(lockfile)
+            sargs = build_twistd_args(service[0], serviceargs, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
                 print sargs
@@ -229,8 +234,21 @@ def main():
         if len(app_dependencies) > 0:
             print "Waiting for containers to spin up..."
 
-            # @TODO: really need some sort of mechanism to actually wait here.
-            time.sleep(15)
+            # Use the lockfiles to know when each one is ready
+            while len(lockfiles):
+                unlockedFiles = set()
+
+                for lockfilepath in lockfiles:
+                    if os.path.exists(lockfilepath):
+                        lockfile = open(lockfilepath, 'w')
+                        result = fcntl.fcntl(lockfile, fcntl.LOCK_EX, os.O_NDELAY)
+                        lockfile.close()
+                        if result == 0:
+                            unlockedFiles.add(lockfilepath)
+                            os.unlink(lockfilepath)
+
+                lockfiles -= unlockedFiles
+
 
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
