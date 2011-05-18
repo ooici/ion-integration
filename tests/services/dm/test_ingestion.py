@@ -15,6 +15,8 @@ from ion.core.exception import ReceivedApplicationError
 from ion.util import procutils as pu
 from ion.integration.eoi.agent.java_agent_wrapper import JavaAgentWrapperClient
 from ion.services.coi.datastore_bootstrap.ion_preload_config import SAMPLE_PROFILE_DATASET_ID, SAMPLE_PROFILE_DATA_SOURCE_ID
+from ion.services.coi.datastore_bootstrap.ion_preload_config import SAMPLE_CHOPTANK_RIVER_GAUGE_DATASET_ID, SAMPLE_CHOPTANK_RIVER_GAUGE_DATA_SOURCE_ID
+
 
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
@@ -23,21 +25,17 @@ class IntTestIngest(ItvTestCase):
 
     app_dependencies = [
                 # four copies of ingest services
-                ("res/apps/ingestion.app", "id=1"),
-                ("res/apps/ingestion.app", "id=2"),
-                ("res/apps/ingestion.app", "id=3"),
-                ("res/apps/ingestion.app", "id=4"),
-                # four copies of JAW
+                #("res/deploy/ingestion.rel", "id=1"),
+                ("res/deploy/r1deploy.rel", "id=1"),
+
                 ("res/apps/eoiagent.app", "id=1"),
-                ("res/apps/eoiagent.app", "id=2"),
-                ("res/apps/eoiagent.app", "id=3"),
-                ("res/apps/eoiagent.app", "id=4"),
-                # one resource registry with demodata registered
-                ("res/apps/resources.app", "register=demodata"),
-                # ingestion needs PSC and EMS
-                ("res/apps/ems.app", "id=1"),
-                ("res/apps/pubsub.app", "id=1"),
+                #("res/apps/eoiagent.app", "id=2"),
+                #("res/apps/eoiagent.app", "id=3"),
+                #("res/apps/eoiagent.app", "id=4"),
+
                 ]
+
+    timeout = 60
 
     @defer.inlineCallbacks
     def setUp(self):
@@ -51,8 +49,10 @@ class IntTestIngest(ItvTestCase):
     def test_ingest(self):
         # get a subscriber going to notification from ingest service
         jawc = JavaAgentWrapperClient()
-        resp = yield jawc.request_update(SAMPLE_PROFILE_DATASET_ID, SAMPLE_PROFILE_DATA_SOURCE_ID)
+        #resp = yield jawc.request_update(SAMPLE_PROFILE_DATASET_ID, SAMPLE_PROFILE_DATA_SOURCE_ID)
+        resp = yield jawc.request_update(SAMPLE_CHOPTANK_RIVER_GAUGE_DATASET_ID, SAMPLE_CHOPTANK_RIVER_GAUGE_DATA_SOURCE_ID)
 
+    """
     @defer.inlineCallbacks
     def test_ingest4(self):
 
@@ -65,3 +65,4 @@ class IntTestIngest(ItvTestCase):
         dl = defer.DeferredList(defs)
         yield dl
 
+    """

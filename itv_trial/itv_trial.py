@@ -105,7 +105,6 @@ def get_test_classes(testargs, debug=False):
     def walksuite(suite, res):
         for x in suite:
             all_x.add(x)
-            print "HI I AM ", x.__class__, "wat", x
             if isinstance(x, ErrorHolder):
                 print "ERROR DETECTED:"
                 x.error.printBriefTraceback()
@@ -231,7 +230,7 @@ def main():
             print "Waiting for containers to spin up..."
 
             # @TODO: really need some sort of mechanism to actually wait here.
-            time.sleep(5)
+            time.sleep(15)
 
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
