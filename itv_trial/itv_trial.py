@@ -248,6 +248,7 @@ def main():
                             os.unlink(lockfilepath)
 
                 lockfiles -= unlockedFiles
+                time.sleep(0.1)
 
 
         # relay signals to trial process we're waiting for
