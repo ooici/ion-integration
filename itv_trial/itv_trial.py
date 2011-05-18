@@ -153,7 +153,7 @@ def main():
     opts, args = get_opts()
     all_testclasses, all_x = get_test_classes(args, opts.debug)
 
-    if opts.debug:
+    if opts.debug and len(all_x) == 1:
         print "\n** SINGLE TEST METHOD SPECIFIED **\n"
 
     if opts.merge:
