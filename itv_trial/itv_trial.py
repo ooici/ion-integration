@@ -11,6 +11,10 @@ to do integration testing on a CEI bootstrapped system running in a cloud enviro
 and a local system where app_dependencies your tests require are run in separate 
 capability containers.
 
+This information is superceded by: https://confluence.oceanobservatories.org/display/CIDev/ITV+Trial+tool+and+Integration+Testing
+
+
+
 To use, derive your test from ion.test.ItvTestCase and fill in the app_dependencies class
 attribute with a list of apps your test needs. Apps are relative to the current working
 directory and typically reside in the res/apps subdir of ioncore-python.
@@ -70,6 +74,7 @@ import subprocess
 import optparse
 import sys
 import fcntl
+import string
 
 def gen_sysname():
     return str(uuid4())[:6]     # gen uuid, use at most 6 chars
@@ -166,16 +171,7 @@ def main():
 
         try:
             applist = eval(content)
-            for x in applist:
-                # make into tuple
-                if not isinstance(x, tuple):
-                    x = (x, None)
-                elif len(x) != 2:
-                    x = (x[0], None)
-
-                if x not in itvfileapps:
-                    itvfileapps.append(x)
-
+            itvfileapps.extend([x for x in applist if x not in itvfileapps])
         except SyntaxError:
             print "ERROR: Could not parse itv file", itvfile
 
@@ -213,10 +209,6 @@ def main():
             if hasattr(x, 'app_dependencies'):
                 for y in x.app_dependencies:
 
-                    # if not specified as a (appfile, args) tuple, make it one
-                    if not isinstance(y, tuple):
-                        y = (y, None)
-
                     # add to in order list of app deps
                     if not y in app_dependencies:
                         app_dependencies.append(y)
@@ -247,13 +239,31 @@ def main():
         ccs = []
         for service in app_dependencies:
 
-            # build serviceargs to pass to service (should be param=value pairs as strings)
-            serviceargs=""
-            if service[1]:
-                params = service[1]
-                if not isinstance(params, list):
-                    params = [params]
-                serviceargs = ",".join(params)
+            # service - allowed to be a string or a list/tuple iterable, first item must be a string
+            if isinstance(service, str):
+                servicename = service
+                serviceargs = []
+            elif hasattr(service, '__iter__'):
+                if len(service) == 0 or not isinstance(service[0], str):
+                    print "Unknown service specified: list/tuple but first item is not a string?", service
+                    continue
+                servicename = service[0]
+                serviceargs = service[1:]
+            else:
+                print "Unknown service type specified:", service
+                continue
+
+            # build serviceargsstr to pass to service (should be param=value pairs as strings, comma separated, no spaces)
+            serviceargsstr=""
+            if len(serviceargs) and serviceargs[0] is not None:
+                flatparams = []
+                for x in serviceargs:
+                    if isinstance(x, list):
+                        flatparams.extend((string.strip(y) for y in x))
+                    else:
+                        flatparams.append(string.strip(x))
+
+                serviceargsstr = ",".join(flatparams)
 
             # build command line
             uniqueid = uuid4()
@@ -261,7 +271,7 @@ def main():
             pidfile = '%s.pid' % (basepath)
             logfile = '%s.log' % (basepath)
             lockfile = '%s.lock' % (basepath)
-            sargs = build_twistd_args(service[0], serviceargs, pidfile, logfile, lockfile, opts)
+            sargs = build_twistd_args(servicename, serviceargsstr, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
                 print sargs
