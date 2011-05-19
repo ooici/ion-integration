@@ -286,7 +286,7 @@ def main():
             # add to list of open containers
             ccs.append(po)
 
-            print "Waiting for container to start:", service[0]
+            print "Waiting for container to start:", servicename
 
             # wait for lockfile to appear
             while not os.path.exists(lockfile):
