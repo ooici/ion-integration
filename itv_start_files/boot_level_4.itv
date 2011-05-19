@@ -1,7 +1,11 @@
 [
-# four copies of ingest services
-#("res/apps/datastore.app", "id=1", "do-init=False","cassandra_username=foo", "cassandra_password=bar"),
-("res/apps/echo_example.app", "id=2"),
-("res/apps/echo_example.app", "id=1"),
+
+# Select the number of instances of the level four services to run...
+
+("res/deploy/bootlevel4.rel","id=1"),
+("res/deploy/bootlevel4.rel","id=2", "do-init=False"),
+("res/deploy/bootlevel4.rel","id=3", "do-init=False"),
+#("res/deploy/bootlevel4.rel","id=4", "do-init=False"),
+
 
 ]
