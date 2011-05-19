@@ -7,7 +7,7 @@
     <dependencies>
     
     	<!-- Eoi-agents dependency - transitive dependencies included -->
-    	<dependency org="net.ooici" name="eoi-agents" rev="0.3.5" conf="*->*,!sources,!javadoc" transitive="true"/>
+    	<dependency org="net.ooici" name="eoi-agents" rev="0.3.6" conf="*->*,!sources,!javadoc" transitive="true"/>
     
     <!-- All of these dependencies (and a few more) come as transitive deps of the eoi-agents project, so there's no need to specify them here -->
     
