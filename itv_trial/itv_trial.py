@@ -135,7 +135,8 @@ def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, sh
 
     # build command line
     sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile, "cc", "-h", opts.hostname]
-    sargs += ["--lockfile", lockfile]
+    if lockfile:
+        sargs += ["--lockfile", lockfile]
     if not shell:
         sargs.append("-n")
     sargs.append("-a")
@@ -300,7 +301,7 @@ def main():
             else:
                 # spawn an interactive twistd shell into this system
                 print "DEBUG_CC:"
-                sargs = build_twistd_args("", "", opts, True)
+                sargs = build_twistd_args("", "", 'debugcc.pid', 'debugcc.log', None, opts, True)
                 os.execve("bin/twistd", sargs, newenv)
 
         def cleanup():
