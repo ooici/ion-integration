@@ -1,0 +1,7 @@
+[
+# four copies of ingest services
+#("res/apps/datastore.app", "id=1", "do-init=False","cassandra_username=foo", "cassandra_password=bar"),
+("res/apps/echo_example.app", "id=2"),
+("res/apps/echo_example.app", "id=1"),
+
+]
