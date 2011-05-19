@@ -152,7 +152,45 @@ def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, sh
 
 def main():
     opts, args = get_opts()
-    all_testclasses, all_x = get_test_classes(args, opts.debug)
+
+    # split args into two groups - probable tests, and .itv eval'able files
+    itvfiles = [x for x in args if x.endswith('.itv')]
+    testfiles = [x for x in args if x not in itvfiles]
+
+    # parse and load .itvs, merge into one big set
+    itvfileapps = []
+    for itvfile in itvfiles:
+        f = open(itvfile)
+        content = f.read()
+        f.close()
+
+        try:
+            applist = eval(content)
+            for x in applist:
+                # make into tuple
+                if not isinstance(x, tuple):
+                    x = (x, None)
+                elif len(x) != 2:
+                    x = (x[0], None)
+
+                if x not in itvfileapps:
+                    itvfileapps.append(x)
+
+        except SyntaxError:
+            print "ERROR: Could not parse itv file", itvfile
+
+    if opts.debug and len(itvfileapps) > 0:
+        print "Apps to run with all tests (via .itv):", itvfileapps
+
+    all_testclasses, all_x = get_test_classes(testfiles, opts.debug)
+
+    # if we have no tests, yet we have itvfiles, that means we need to imply --debug-cc
+    if len(testfiles) == 0 and len(itvfileapps) > 0:
+        print "ITV files only specified, no tests: implying --debug-cc"
+        opts.debug_cc = True
+
+        # we also need to fake that we have a test so the logic below runs
+        all_testclasses = [object]
 
     if opts.debug and len(all_x) == 1:
         print "\n** SINGLE TEST METHOD SPECIFIED **\n"
@@ -189,10 +227,17 @@ def main():
 
                     dep_assoc[y].append(x)
 
+        # add any and all itv file apps (on the end)
+        app_dependencies.extend(itvfileapps)
+
         if len(app_dependencies) > 0:
             print "The following app_dependencies will be started:"
             for service in app_dependencies:
-                extra = "(%s)" % ",".join([tc.__name__ for tc in dep_assoc[service]])
+                if service in itvfileapps:
+                    extra = "(via .itv file)"
+                else:
+                    extra = "(%s)" % ",".join([tc.__name__ for tc in dep_assoc[service]])
+
                 print "\t", service, extra
 
             if not opts.nopause:
