@@ -1,0 +1,11 @@
+[
+
+# Select the number of instances of the level nine services to run...
+
+("res/deploy/bootlevel9.rel","id=1"),
+#("res/deploy/bootlevel9.rel","id=2"),
+#("res/deploy/bootlevel9.rel","id=3"),
+#("res/deploy/bootlevel9.rel","id=4"),
+
+
+]
