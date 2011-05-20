@@ -11,6 +11,10 @@ to do integration testing on a CEI bootstrapped system running in a cloud enviro
 and a local system where app_dependencies your tests require are run in separate 
 capability containers.
 
+This information is superceded by: https://confluence.oceanobservatories.org/display/CIDev/ITV+Trial+tool+and+Integration+Testing
+
+
+
 To use, derive your test from ion.test.ItvTestCase and fill in the app_dependencies class
 attribute with a list of apps your test needs. Apps are relative to the current working
 directory and typically reside in the res/apps subdir of ioncore-python.
@@ -69,6 +73,8 @@ from uuid import uuid4
 import subprocess
 import optparse
 import sys
+import fcntl
+import string
 
 def gen_sysname():
     return str(uuid4())[:6]     # gen uuid, use at most 6 chars
@@ -123,7 +129,7 @@ def get_test_classes(testargs, debug=False):
 
     return (all_testclasses, all_x)
 
-def build_twistd_args(service, serviceargs, opts, shell=False):
+def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, shell=False):
     """
     Returns an array suitable for spawning a twistd cc container.
     """
@@ -132,11 +138,10 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
     if len(serviceargs) > 0:
         extraargs += "," + serviceargs
 
-    # temporary log/pid path
-    tf = os.path.join(tempfile.gettempdir(), "cc-" + str(uuid4()))
-
     # build command line
-    sargs = ["bin/twistd", "-n", "--pidfile", tf + ".pid", "--logfile", tf + ".log", "cc", "-h", opts.hostname]
+    sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile, "cc", "-h", opts.hostname]
+    if lockfile:
+        sargs += ["--lockfile", lockfile]
     if not shell:
         sargs.append("-n")
     sargs.append("-a")
@@ -152,9 +157,38 @@ def build_twistd_args(service, serviceargs, opts, shell=False):
 
 def main():
     opts, args = get_opts()
-    all_testclasses, all_x = get_test_classes(args, opts.debug)
 
-    if opts.debug:
+    # split args into two groups - probable tests, and .itv eval'able files
+    itvfiles = [x for x in args if x.endswith('.itv')]
+    testfiles = [x for x in args if x not in itvfiles]
+
+    # parse and load .itvs, merge into one big set
+    itvfileapps = []
+    for itvfile in itvfiles:
+        f = open(itvfile)
+        content = f.read()
+        f.close()
+
+        try:
+            applist = eval(content)
+            itvfileapps.extend([x for x in applist if x not in itvfileapps])
+        except SyntaxError:
+            print "ERROR: Could not parse itv file", itvfile
+
+    if opts.debug and len(itvfileapps) > 0:
+        print "Apps to run with all tests (via .itv):", itvfileapps
+
+    all_testclasses, all_x = get_test_classes(testfiles, opts.debug)
+
+    # if we have no tests, yet we have itvfiles, that means we need to imply --debug-cc
+    if len(testfiles) == 0 and len(itvfileapps) > 0:
+        print "ITV files only specified, no tests: implying --debug-cc"
+        opts.debug_cc = True
+
+        # we also need to fake that we have a test so the logic below runs
+        all_testclasses = [object]
+
+    if opts.debug and len(all_x) == 1:
         print "\n** SINGLE TEST METHOD SPECIFIED **\n"
 
     if opts.merge:
@@ -175,10 +209,6 @@ def main():
             if hasattr(x, 'app_dependencies'):
                 for y in x.app_dependencies:
 
-                    # if not specified as a (appfile, args) tuple, make it one
-                    if not isinstance(y, tuple):
-                        y = (y, None)
-
                     # add to in order list of app deps
                     if not y in app_dependencies:
                         app_dependencies.append(y)
@@ -189,10 +219,17 @@ def main():
 
                     dep_assoc[y].append(x)
 
+        # add any and all itv file apps (on the end)
+        app_dependencies.extend(itvfileapps)
+
         if len(app_dependencies) > 0:
             print "The following app_dependencies will be started:"
             for service in app_dependencies:
-                extra = "(%s)" % ",".join([tc.__name__ for tc in dep_assoc[service]])
+                if service in itvfileapps:
+                    extra = "(via .itv file)"
+                else:
+                    extra = "(%s)" % ",".join([tc.__name__ for tc in dep_assoc[service]])
+
                 print "\t", service, extra
 
             if not opts.nopause:
@@ -202,16 +239,39 @@ def main():
         ccs = []
         for service in app_dependencies:
 
-            # build serviceargs to pass to service (should be param=value pairs as strings)
-            serviceargs=""
-            if service[1]:
-                params = service[1]
-                if not isinstance(params, list):
-                    params = [params]
-                serviceargs = ",".join(params)
+            # service - allowed to be a string or a list/tuple iterable, first item must be a string
+            if isinstance(service, str):
+                servicename = service
+                serviceargs = []
+            elif hasattr(service, '__iter__'):
+                if len(service) == 0 or not isinstance(service[0], str):
+                    print "Unknown service specified: list/tuple but first item is not a string?", service
+                    continue
+                servicename = service[0]
+                serviceargs = service[1:]
+            else:
+                print "Unknown service type specified:", service
+                continue
+
+            # build serviceargsstr to pass to service (should be param=value pairs as strings, comma separated, no spaces)
+            serviceargsstr=""
+            if len(serviceargs) and serviceargs[0] is not None:
+                flatparams = []
+                for x in serviceargs:
+                    if isinstance(x, list):
+                        flatparams.extend((string.strip(y) for y in x))
+                    else:
+                        flatparams.append(string.strip(x))
+
+                serviceargsstr = ",".join(flatparams)
 
             # build command line
-            sargs = build_twistd_args(service[0], serviceargs, opts)
+            uniqueid = uuid4()
+            basepath = os.path.join(tempfile.gettempdir(), 'cc-%s' % (str(uniqueid)))
+            pidfile = '%s.pid' % (basepath)
+            logfile = '%s.log' % (basepath)
+            lockfile = '%s.lock' % (basepath)
+            sargs = build_twistd_args(servicename, serviceargsstr, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
                 print sargs
@@ -226,11 +286,21 @@ def main():
             # add to list of open containers
             ccs.append(po)
 
-        if len(app_dependencies) > 0:
-            print "Waiting for containers to spin up..."
+            print "Waiting for container to start:", servicename
 
-            # @TODO: really need some sort of mechanism to actually wait here.
-            time.sleep(15)
+            # wait for lockfile to appear
+            while not os.path.exists(lockfile):
+                if opts.debug:
+                    print "\tWaiting for lockfile", lockfile, "to appear"
+                time.sleep(1)
+            else:
+                # ok, lock file is up - wait until os tells us it is unlocked
+                    lfh = open(lockfile, 'w')
+                    print "\tLockfile appeared, waiting for container unlock..."
+                    result = fcntl.lockf(lfh, fcntl.LOCK_EX) #, os.O_NDELAY)
+                    print "\tUnlocked!"
+                    lfh.close()
+                    os.unlink(lockfile)
 
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
@@ -286,7 +356,7 @@ def main():
             else:
                 # spawn an interactive twistd shell into this system
                 print "DEBUG_CC:"
-                sargs = build_twistd_args("", "", opts, True)
+                sargs = build_twistd_args("", "", 'debugcc.pid', 'debugcc.log', None, opts, True)
                 os.execve("bin/twistd", sargs, newenv)
 
         def cleanup():
