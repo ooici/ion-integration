@@ -1,0 +1,17 @@
+{
+    "type":"release",
+    "name":"Bootlevel 10",
+    "version": "0.1",
+    "description": "Release 1 Bootlevel 10",
+    "ioncore" : "0.4.7",
+    "apps":[
+        # CC Agent
+        {'name':'ccagent',              'version':'0.1',
+        },
+
+
+        {'name':'eoiagents',    'version':'0.1',
+        },
+
+    ]
+}
