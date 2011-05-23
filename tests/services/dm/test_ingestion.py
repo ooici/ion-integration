@@ -27,6 +27,7 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import HAS_A_ID
 
 DATA_SOURCE_RESOURCE_TYPE = create_type_identifier(object_id=4503, version=1)
 
+THREDDS_AUTHENTICATION_TYPE = create_type_identifier(object_id=4504, version=1)
 
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
@@ -81,28 +82,37 @@ class IntTestIngest(ItvTestCase):
 
 
         datasource = yield self.rc.create_instance(DATA_SOURCE_RESOURCE_TYPE,
-                                                ResourceName = 'NTAS RT for ingestion testing',
-                                                ResourceDescription= 'An example of a data source for the NTAS RT dataset for testing ingestion')
+                                                ResourceName = 'CGSN example for ingestion testing',
+                                                ResourceDescription= 'An example of a data source for the CGSN OSU dataset for testing ingestion')
+
+
+        datasource.source_type = datasource.SourceType.NETCDF_S
+        datasource.request_type = datasource.RequestType.DAP
+
+        datasource.dataset_url = "http://uop.whoi.edu/oceansites/ooi/OS_NTAS_2010_R_M-1.nc"
+
+        datasource.max_ingest_millis = 120000
+        
+        datasource.registration_datetime_millis = IonTime().time_ms
+
+        datasource.ion_title = "NTAS 1"
+        datasource.ion_description = "OSU CGSN"
+
+        datasource.update_interval_seconds = 86400
+
+        #datasource.authentication = datasource.CreateObject(THREDDS_AUTHENTICATION_TYPE)
+        #datasource.authentication.name = 'cgsn'
+        #datasource.authentication.password = "ISMT2!!"
 
 
         # Just create it - the workbench/datastore will take care of the rest!
         asssociation = yield self.ac.create_association(datasource, HAS_A_ID,  dataset)
 
-        datasource.source_type = datasource.SourceType.NETCDF_S
-        datasource.request_type = datasource.RequestType.DAP
-
-        datasource.base_url = "http://geoport.whoi.edu/thredds/dodsC/usgs/data0/rsignell/data/oceansites/OS_NTAS_2010_R_M-1.nc"
-
-        datasource.max_ingest_millis = 6000
-        
-        datasource.registration_datetime_millis = IonTime().time_ms
-
-        datasource.ion_title = "NTAS1 Data Source"
-        datasource.ion_description = "Data NTAS1"
-
         yield self.rc.put_resource_transaction([dataset, datasource])
 
         log.info('Created dataset and datasource for testing')
+
+        #yield pu.asleep(5)
 
         # get a subscriber going to notification from ingest service
         jawc = JavaAgentWrapperClient()
