@@ -28,7 +28,7 @@ class IntTestIngest(ItvTestCase):
                 #("res/deploy/ingestion.rel", "id=1"),
                 ("res/deploy/r1deploy.rel", "id=1"),
 
-                ("res/apps/eoiagent.app", "id=1"),
+                ("res/apps/eoiagents.app", "id=1"),
                 #("res/apps/eoiagent.app", "id=2"),
                 #("res/apps/eoiagent.app", "id=3"),
                 #("res/apps/eoiagent.app", "id=4"),
