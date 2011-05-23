@@ -16,8 +16,10 @@ CONF = ioninit.config(__name__)
 
 class Bootlevel6ReadyTest(ItvTestCase):
 
-    app_dependencies = ["res/apps/attributestore.app"]
-
+    app_dependencies = ["res/deploy/bootlevel4_local.rel",
+                        "res/deploy/bootlevel5.rel",
+                        "res/deploy/bootlevel6.rel",
+                        ]
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()

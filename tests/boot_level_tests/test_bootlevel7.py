@@ -16,7 +16,11 @@ CONF = ioninit.config(__name__)
 
 class Bootlevel7ReadyTest(ItvTestCase):
 
-    app_dependencies = ["res/apps/identity_registry.app"]
+    app_dependencies = ["res/deploy/bootlevel4_local.rel",
+                        "res/deploy/bootlevel5.rel",
+                        "res/deploy/bootlevel6.rel",
+                        "res/deploy/bootlevel7.rel",
+                        ]
 
     @defer.inlineCallbacks
     def setUp(self):
