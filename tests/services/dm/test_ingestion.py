@@ -36,16 +36,21 @@ class IntTestIngest(ItvTestCase):
     app_dependencies = [
                 # four copies of ingest services
                 #("res/deploy/ingestion.rel", "id=1"),
-                ("res/deploy/r1deploy.rel", "id=1"),
+                #("res/deploy/r1deploy.rel", "id=1"),
+                ("res/deploy/bootlevel4_local.rel", "id=1"),
+                ("res/deploy/bootlevel5.rel", "id=1"),
+                ("res/apps/pubsub.app", "id=1"),
+                ("res/apps/ingestion.app", "id=1"),
 
-                ("res/apps/eoiagent.app", "id=1"),
+
+                ("res/apps/eoiagents.app", "id=1"),
                 #("res/apps/eoiagent.app", "id=2"),
                 #("res/apps/eoiagent.app", "id=3"),
                 #("res/apps/eoiagent.app", "id=4"),
 
                 ]
 
-    timeout = 60
+    timeout = 120
 
     @defer.inlineCallbacks
     def setUp(self):
@@ -97,10 +102,7 @@ class IntTestIngest(ItvTestCase):
 
         yield self.rc.put_resource_transaction([dataset, datasource])
 
-        print datasource
-
-        print dataset
-
+        log.info('Created dataset and datasource for testing')
 
         # get a subscriber going to notification from ingest service
         jawc = JavaAgentWrapperClient()
