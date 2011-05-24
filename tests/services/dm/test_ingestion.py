@@ -43,6 +43,8 @@ class IntTestIngest(ItvTestCase):
     app_dependencies = [
 
                 ("res/deploy/bootlevel4_local.rel", "id=1"),
+                #("res/deploy/bootlevel4.rel", "id=1"),
+                #("res/deploy/bootlevel4.rel", "id=2","do-init=False"),
                 ("res/deploy/bootlevel5.rel", "id=1"),
                 ("res/apps/pubsub.app", "id=1"),
                 ("res/apps/ingestion.app", "id=1"),
