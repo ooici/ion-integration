@@ -3,9 +3,9 @@
 # Select the number of instances of the level six services to run...
 
 ("res/deploy/bootlevel6.rel","id=1"),
-("res/deploy/bootlevel6.rel","id=2"),
-("res/deploy/bootlevel6.rel","id=3"),
-("res/deploy/bootlevel6.rel","id=4"),
+#("res/deploy/bootlevel6.rel","id=2"),
+#("res/deploy/bootlevel6.rel","id=3"),
+#("res/deploy/bootlevel6.rel","id=4"),
 
 
 ]

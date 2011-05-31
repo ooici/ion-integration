@@ -16,8 +16,12 @@ CONF = ioninit.config(__name__)
 
 class Bootlevel8ReadyTest(ItvTestCase):
 
-    app_dependencies = ["res/apps/pubsub.app"]
-
+    app_dependencies = ["res/deploy/bootlevel4_local.rel",
+                        "res/deploy/bootlevel5.rel",
+                        "res/deploy/bootlevel6.rel",
+                        "res/deploy/bootlevel7.rel",
+                        "res/deploy/bootlevel8.rel",
+                        ]
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
@@ -31,7 +35,7 @@ class Bootlevel8ReadyTest(ItvTestCase):
         p = Process()
         yield p.spawn()
 
-        for servicename in ['pubsub']:
+        for servicename in ['pubsub','scheduler','dataset_controller']:
             (content, headers, msg) = yield p.rpc_send(p.get_scoped_name('system', servicename), 'ping', {})
             # if timeout, will just fail the test
 

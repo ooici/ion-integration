@@ -2,7 +2,7 @@
 
 # Select the number of instances of the level eight services to run...
 
-("res/deploy/bootlevel8.rel","id=1"),
+("res/deploy/bootlevel8.rel","id=1", "do-init=True"), # Start the NCML generator schedule or not?
 #("res/deploy/bootlevel8.rel","id=2"),
 #("res/deploy/bootlevel8.rel","id=3"),
 #("res/deploy/bootlevel8.rel","id=4"),

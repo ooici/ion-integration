@@ -39,5 +39,6 @@ setup(
     install_requires = [
         'ioncore'
                        ],
-    include_package_data = True
+    include_package_data = True,
+    test_suite = "tests"
      )

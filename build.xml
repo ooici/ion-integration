@@ -65,10 +65,12 @@
   	<java classpathref="runtime.classpath" classname="net.ooici.integration.eoi.IntegrationTest" />
   </target>-->
   
-  <target name="get-eoi-agents" description="==> Uses Apache Ivy to retreive the eoi-agents jar (as specified in the ivy.xml file) and all its transitive dependencies">
-  <!-- Remove the ioncore-java directory to allow re-retrieval in case it's referencing a #.#.#-dev version" -->
+  <target name="get-eoi-agents" depends="clean" description="==> Uses Apache Ivy to retreive the eoi-agents jar (as specified in the ivy.xml file) and all its transitive dependencies">
+  <!-- Remove the ioncore-java and eoi-agents directories to allow re-retrieval in case they reference a #.#.#-dev version" -->
   		<delete dir="${ivy.cache.dir}/net.ooici/ioncore-java" />
+  		<delete dir="${ivy.cache.dir}/net.ooici/eoi-agents" />
         <ivy:retrieve sync="true" overwriteMode="always" />
+        <copy todir="${lib.dir}" file="log4j.properties"/>
     </target>
     
 </project>

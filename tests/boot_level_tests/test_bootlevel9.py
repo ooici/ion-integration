@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-@file test_bootlevel5.py
-@test Bootlevel 5 ready checks.
+@file test_bootlevel89.py
+@test Bootlevel 9 ready checks.
 """
 
 import ion.util.ionlog
@@ -14,12 +14,15 @@ from ion.core.process.process import Process
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
 
-class Bootlevel5ReadyTest(ItvTestCase):
+class Bootlevel9ReadyTest(ItvTestCase):
 
     app_dependencies = ["res/deploy/bootlevel4_local.rel",
                         "res/deploy/bootlevel5.rel",
+                        "res/deploy/bootlevel6.rel",
+                        "res/deploy/bootlevel7.rel",
+                        "res/deploy/bootlevel8.rel",
+                        "res/deploy/bootlevel9.rel",
                         ]
-
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
@@ -33,7 +36,7 @@ class Bootlevel5ReadyTest(ItvTestCase):
         p = Process()
         yield p.spawn()
 
-        for servicename in ['exchange_management', 'cassandra_manager_agent']:
+        for servicename in ['ingestion','notification_alert','store_service','cdm_validation_service','app_integration']:
             (content, headers, msg) = yield p.rpc_send(p.get_scoped_name('system', servicename), 'ping', {})
             # if timeout, will just fail the test
 
