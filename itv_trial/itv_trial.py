@@ -120,7 +120,7 @@ def get_test_classes(testargs, debug=False):
             if not isinstance(x, TestSuite):
                 if debug:
                     print "Adding to test suites", x.__class__
-                #x.timeout = 100    
+
                 res.add(x.__class__)
             else:
                 walksuite(x, res)
@@ -202,14 +202,11 @@ def main():
     results = {}
 
     for testclass in testset:
-        
         app_dependencies = []
         dep_assoc = {}          # associates app deps to test classes
         for x in testclass:
-            x.app_pid_files = []
             print str(x), "%s.%s" % (x.__module__, x.__name__)
             if hasattr(x, 'app_dependencies'):
-                
                 for y in x.app_dependencies:
 
                     # add to in order list of app deps
@@ -221,7 +218,7 @@ def main():
                         dep_assoc[y] = []
 
                     dep_assoc[y].append(x)
-        
+
         # add any and all itv file apps (on the end)
         app_dependencies.extend(itvfileapps)
 
@@ -241,7 +238,7 @@ def main():
 
         ccs = []
         for service in app_dependencies:
-            print service
+
             # service - allowed to be a string or a list/tuple iterable, first item must be a string
             if isinstance(service, str):
                 servicename = service
@@ -274,9 +271,6 @@ def main():
             pidfile = '%s.pid' % (basepath)
             logfile = '%s.log' % (basepath)
             lockfile = '%s.lock' % (basepath)
-            for cls in dep_assoc[service]:
-                
-                cls.app_pid_files.append(pidfile)
             sargs = build_twistd_args(servicename, serviceargsstr, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
@@ -357,13 +351,7 @@ def main():
                     trialargs = args
                 else:
                     trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
-                app_pids = []
-                for pidfile in x.app_pid_files:
-                    f = open(pidfile)
-                    pid = f.read(6)
-                    app_pids.append(pid)
-                
-                newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)
+
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
                 # spawn an interactive twistd shell into this system
