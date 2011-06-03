@@ -206,7 +206,6 @@ def main():
         app_dependencies = []
         dep_assoc = {}          # associates app deps to test classes
         for x in testclass:
-            x.app_pid_files = []
             print str(x), "%s.%s" % (x.__module__, x.__name__)
             if hasattr(x, 'app_dependencies'):
                 
@@ -240,8 +239,8 @@ def main():
                 time.sleep(5)
 
         ccs = []
+        pid_files = []
         for service in app_dependencies:
-            print service
             # service - allowed to be a string or a list/tuple iterable, first item must be a string
             if isinstance(service, str):
                 servicename = service
@@ -274,9 +273,7 @@ def main():
             pidfile = '%s.pid' % (basepath)
             logfile = '%s.log' % (basepath)
             lockfile = '%s.lock' % (basepath)
-            for cls in dep_assoc[service]:
-                
-                cls.app_pid_files.append(pidfile)
+            pid_files.append(pidfile)
             sargs = build_twistd_args(servicename, serviceargsstr, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
@@ -307,7 +304,9 @@ def main():
                     print "\tUnlocked!"
                     lfh.close()
                     os.unlink(lockfile)
-
+            #The containers has started so open the pidfiles
+           
+            
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
             os.kill(trialpid, signum)
@@ -350,6 +349,13 @@ def main():
             newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
+            app_pids = []
+            for pidfile in pid_files:
+                f = open(pidfile)
+                pid = f.read(6)
+                f.close()
+                app_pids.append(pid)
+            newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)    
             if not opts.debug_cc:
 
                 # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
@@ -358,12 +364,7 @@ def main():
                 else:
                     trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
                 app_pids = []
-                for pidfile in x.app_pid_files:
-                    f = open(pidfile)
-                    pid = f.read(6)
-                    app_pids.append(pid)
-                
-                newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)
+            
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
                 # spawn an interactive twistd shell into this system
