@@ -62,7 +62,7 @@ class TestAISProcesses(ItvTestCase):
   
         
     def test_instantiate(self):
-        #self.__print_memory_output()
+        
         log.info("Started the containers")
         
         
