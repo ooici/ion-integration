@@ -237,6 +237,7 @@ def main():
                 time.sleep(5)
 
         ccs = []
+        pid_files = []
         for service in app_dependencies:
 
             # service - allowed to be a string or a list/tuple iterable, first item must be a string
@@ -271,6 +272,8 @@ def main():
             pidfile = '%s.pid' % (basepath)
             logfile = '%s.log' % (basepath)
             lockfile = '%s.lock' % (basepath)
+            pid_files.append(pidfile)
+
             sargs = build_twistd_args(servicename, serviceargsstr, pidfile, logfile, lockfile, opts)
 
             if opts.debug:
@@ -301,7 +304,9 @@ def main():
                     print "\tUnlocked!"
                     lfh.close()
                     os.unlink(lockfile)
-
+            #The containers has started so open the pidfiles
+           
+            
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
             os.kill(trialpid, signum)
@@ -341,9 +346,20 @@ def main():
         else:
             # NEW CHILD PROCESS: spawn trial, exec into nothingness
             newenv = os.environ.copy()
+            app_pids = []
+            for pidfile in pid_files:
+                try:
+                    f = open(pidfile)
+                    pid = f.read(6)
+                    f.close()
+                    app_pids.append(pid)
+                except IOError, ex:
+                    print "Problem with the pidfile: %s  errno: %s message: %s" % (pidfile, ex.errno, ex.message)
+            newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)   
             newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
+ 
             if not opts.debug_cc:
 
                 # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
@@ -351,7 +367,7 @@ def main():
                     trialargs = args
                 else:
                     trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
-
+                    
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
                 # spawn an interactive twistd shell into this system
