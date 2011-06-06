@@ -56,22 +56,10 @@ class TestAISProcesses(ItvTestCase):
     
     @defer.inlineCallbacks
     def tearDown(self):
-        self.__print_memory_output()
-        print "In tearDown %s " % (time.time() - self.t,)
+        self._print_memory_usage()
+        
         yield self._stop_container()  
   
-    def __print_memory_output(self):
-        pids = os.getenv("ION_TEST_CASE_PIDS")
-
-        log.info("Started the containers")
-        ps = ["/bin/ps"]
-        ps_args = ["-o args,command,rss,vsize",  "-p", pids]
-        
-        #I'd rather not execute this through the shell, but the output from the command was truncated
-        #when I did not set shell=True.
-        p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
-        stdout = p.communicate()[0]
-        print stdout
         
     def test_instantiate(self):
         #self.__print_memory_output()

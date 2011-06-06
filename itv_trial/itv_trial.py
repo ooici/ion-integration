@@ -346,16 +346,20 @@ def main():
         else:
             # NEW CHILD PROCESS: spawn trial, exec into nothingness
             newenv = os.environ.copy()
+            app_pids = []
+            for pidfile in pid_files:
+                try:
+                    f = open(pidfile)
+                    pid = f.read(6)
+                    f.close()
+                    app_pids.append(pid)
+                except IOError, ex:
+                    print "Problem with the pidfile: %s  errno: %s message: %s" % (pidfile, ex.errno, ex.message)
+            newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)   
             newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
-            app_pids = []
-            for pidfile in pid_files:
-                f = open(pidfile)
-                pid = f.read(6)
-                f.close()
-                app_pids.append(pid)
-            newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)    
+ 
             if not opts.debug_cc:
 
                 # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
