@@ -12,12 +12,13 @@ from twisted.trial import unittest
 from ion.test.iontest import ItvTestCase
 from ion.core import ioninit
 
-from ion.services.dm.inventory.test.test_association_service import AssociationServiceTest
+#from ion.services.dm.inventory.test.test_association_service import AssociationServiceTest
+from ion.services.dm.inventory.test import test_association_service as ioncore_python_assoc_test
 
 log = ion.util.ionlog.getLogger(__name__)
 CONF = ioninit.config(__name__)
 
-class AssociationServiceIntegrationTest(ItvTestCase,AssociationServiceTest):
+class AssociationServiceIntegrationTest(ItvTestCase,ioncore_python_assoc_test.AssociationServiceTest):
 
     app_dependencies = ["res/deploy/events.rel"]
     services = []       # blank out services from base class so setUp doens't start them.
@@ -25,7 +26,7 @@ class AssociationServiceIntegrationTest(ItvTestCase,AssociationServiceTest):
     @defer.inlineCallbacks
     def setUp(self):
         self._skip_test_msg = "Skipping this test because it assumes the backend data is not persisted."
-        yield AssociationServiceTest.setUp(self)
+        yield ioncore_python_assoc_test.AssociationServiceTest.setUp(self)
 
     def test_get_association_one(self):
         raise unittest.SkipTest(self._skip_test_msg)
