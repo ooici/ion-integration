@@ -13,7 +13,6 @@ from twisted.web.client import getPage
 import ion.util.ionlog
 from ion.test.iontest import IonTestCase
 from ion.util.procutils import asleep
-from ion.util.itv_decorator import itv
 from ion.core import ioninit
 
 log = ion.util.ionlog.getLogger(__name__)
@@ -32,7 +31,6 @@ class LEWTest(IonTestCase):
     def tearDown(self):
         yield self._stop_container()
 
-    @itv(CONF)
     @defer.inlineCallbacks
     def test_basic(self):
         yield getPage(GO_URL)
