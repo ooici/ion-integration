@@ -306,18 +306,30 @@ def main():
             print "Waiting for container to start:", servicename
 
             # wait for lockfile to appear
-            while not os.path.exists(lockfile):
-                if opts.debug:
-                    print "\tWaiting for lockfile", lockfile, "to appear"
-                time.sleep(1)
-            else:
-                # ok, lock file is up - wait until os tells us it is unlocked
+            try:
+                while not os.path.exists(lockfile):
+                    if opts.debug:
+                        print "\tWaiting for lockfile", lockfile, "to appear"
+                    time.sleep(1)
+                else:
+                    # ok, lock file is up - wait until os tells us it is unlocked
                     lfh = open(lockfile, 'w')
                     print "\tLockfile appeared, waiting for container unlock..."
-                    result = fcntl.lockf(lfh, fcntl.LOCK_EX) #, os.O_NDELAY)
+                    result = fcntl.lockf(lfh, fcntl.LOCK_EX)
                     print "\tUnlocked!"
                     lfh.close()
                     os.unlink(lockfile)
+
+            except KeyboardInterrupt:
+                print "CTRL-C PRESSED, ATTEMPTING TO TERMINATE CCS"
+
+                # must cleanup spawned subprocess(es)!
+                for cc in ccs:
+                    os.kill(cc.pid, signal.SIGTERM)
+
+                # reraise, should kill program
+                raise
+
             #The containers has started so open the pidfiles
            
             
