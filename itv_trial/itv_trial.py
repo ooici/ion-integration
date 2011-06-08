@@ -88,6 +88,7 @@ def get_opts():
 
     p.add_option("--sysname",   action="store",     dest="sysname", help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
     p.add_option("--hostname",  action="store",     dest="hostname",help="Connect to the broker at this hostname. If not specified, uses localhost.")
+    p.add_option("--profiler",  action="store",     dest="profiler",help="Use the profiler cprofiler, hotspot, etc for each twistd container process. This saves the profiler output in a file service_prof_output.prof.")
     p.add_option("--merge",     action="store_true",dest="merge",   help="Merge the environment for all integration tests and run them in one shot.")
     p.add_option("--no-pause",  action="store_true",dest="nopause", help="Do not pause after finding all tests and deps to run.")
     p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
@@ -139,20 +140,33 @@ def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, sh
         extraargs += "," + serviceargs
 
     # build command line
-    sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile, "cc", "-h", opts.hostname]
+    sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile] 
+       
+    if opts.profiler:
+        #I assume that service is a string of this format res/apps/service.app
+        app_file = service.split(os.sep)[-1]
+        service_name = app_file.split(".")[0] 
+        sargs +=["--savestats", "--profiler="+ opts.profiler, "--profile", service_name+"_prof_output.prof"]
+    
+    #Everything before the cc app are arguments to twistd, otherwise they are arguments to cc.
+    sargs += ["cc", "-h", opts.hostname]
+    
     if lockfile:
         sargs += ["--lockfile", lockfile]
+    
     if not shell:
         sargs.append("-n")
     sargs.append("-a")
     sargs.append(extraargs)
+    
+        
     if service != "":
         sargs.append(service)
-
+    
     # if specified, wrap the twisted container spawn in this exec
     if opts.wrapbin and not shell:
         sargs.insert(0, opts.wrapbin)
-
+    
     return sargs
 
 def main():
