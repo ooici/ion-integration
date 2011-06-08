@@ -9,7 +9,7 @@
 import ion.util.ionlog
 from twisted.internet import defer
 from twisted.trial import unittest
-from ion.test.iontest import ItvTestCase
+from iontest.iontest import ItvTestCase
 from ion.core import ioninit
 
 #from ion.services.dm.inventory.test.test_association_service import AssociationServiceTest

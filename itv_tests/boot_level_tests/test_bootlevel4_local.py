@@ -8,7 +8,7 @@
 
 import ion.util.ionlog
 from twisted.internet import defer
-from ion.test.iontest import ItvTestCase
+from iontest.iontest import ItvTestCase
 from ion.core import ioninit
 from ion.core.process.process import Process
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_PREDICATES, ION_RESOURCE_TYPES, ION_IDENTITIES

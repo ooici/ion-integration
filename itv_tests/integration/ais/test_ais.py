@@ -3,7 +3,7 @@
 import ion.util.ionlog
 from twisted.internet import defer
 
-from ion.test.iontest import ItvTestCase
+from iontest.iontest import ItvTestCase
 
 class TestAISProcecesses(ItvTestCase):
     app_dependencies = ["res/apps/datastore.app",

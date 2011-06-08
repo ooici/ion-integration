@@ -16,7 +16,7 @@ from ion.services.dm.scheduler.scheduler_service import SchedulerServiceClient, 
 from ion.core.data import storage_configuration_utility
 from ion.core.data.storage_configuration_utility import STORAGE_PROVIDER, PERSISTENT_ARCHIVE
 
-from ion.test.iontest import IonTestCase
+from iontest.iontest import IonTestCase
 import ion.util.ionlog
 from ion.util.iontime import IonTime
 from ion.util.procutils import asleep

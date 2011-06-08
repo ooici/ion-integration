@@ -9,7 +9,7 @@
 import ion.util.ionlog
 from twisted.internet import defer
 
-from ion.test.iontest import ItvTestCase
+from iontest.iontest import ItvTestCase
 from ion.core import ioninit
 from ion.core.exception import ReceivedApplicationError
 from ion.util import procutils as pu

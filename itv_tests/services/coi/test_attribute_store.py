@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ion.test.iontest import ItvTestCase
+from iontest.iontest import ItvTestCase
 from twisted.internet import defer
 from ion.services.coi.attributestore import AttributeStoreClient
 
