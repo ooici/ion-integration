@@ -70,7 +70,14 @@
   		<delete dir="${ivy.cache.dir}/net.ooici/ioncore-java" />
   		<delete dir="${ivy.cache.dir}/net.ooici/eoi-agents" />
         <ivy:retrieve sync="true" overwriteMode="always" />
+        <!-- Copy the log4j.properties file -->
         <copy todir="${lib.dir}" file="log4j.properties"/>
+        <!-- Create a symlink of the eoi-agents jar 
+        NOTE:  While creation of the symlink works as expected - it's not possible to launch a jar "through" a symlink, so this method won't work...
+        -->
+        <!-- <symlink link="${lib.dir}/eoi-agents.jar" resource="${lib.dir}/eoi-agents-${eoi.version}.jar"/> -->
+        <!-- Rename the eoi-agents-x.x.x.jar to eoi-agents.jar so that configurations don't need to be changed -->
+        <move file="${lib.dir}/eoi-agents-${eoi.version}.jar" tofile="${lib.dir}/eoi-agents.jar"/>
     </target>
     
 </project>
