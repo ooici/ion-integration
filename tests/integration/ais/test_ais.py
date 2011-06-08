@@ -11,6 +11,9 @@ from twisted.internet import defer
 from ion.test.iontest import ItvTestCase
 from ion.core import ioninit
 
+
+from ion.integration.ais.test.test_app_integration import AppIntegrationTest
+
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
@@ -18,6 +21,7 @@ from ion.core.process.process import Process
 
 from ion.core.messaging.message_client import MessageClient
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
+from ion.services.coi.resource_registry.resource_client import ResourceClient
 
 from ion.integration.ais.ais_object_identifiers import AIS_REQUEST_MSG_TYPE, AIS_RESPONSE_ERROR_TYPE
 
@@ -26,7 +30,9 @@ from ion.integration.ais.ais_object_identifiers import FIND_DATA_RESOURCES_REQ_M
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ANONYMOUS_USER_ID
 
 
-class TestAISProcesses(ItvTestCase):
+class TestAISProcesses(ItvTestCase, AppIntegrationTest):
+    timeout = 77
+
     app_dependencies = ["res/apps/datastore.app",
                        "res/apps/association.app",
                        "res/apps/resource_registry.app",
@@ -36,9 +42,10 @@ class TestAISProcesses(ItvTestCase):
                        "res/apps/pubsub.app",
                        "res/apps/scheduler.app",
                        "res/apps/dataset_controller.app",
-                       "res/apps/app_integration.app"
+                       "res/apps/app_integration.app",
+                       "res/apps/notification_alert.app"
                        ]
-      
+
 
     @defer.inlineCallbacks
     def setUp(self):
@@ -50,6 +57,8 @@ class TestAISProcesses(ItvTestCase):
         
         self.mc = MessageClient(proc)
         self.aisc = AppIntegrationServiceClient(proc)
+        self.rc = ResourceClient(proc)
+        self._proc = proc
     
     @defer.inlineCallbacks
     def tearDown(self):
@@ -60,7 +69,7 @@ class TestAISProcesses(ItvTestCase):
     def test_instantiate(self):
         log.info("Started the containers")
         
-        
+     
         
     @defer.inlineCallbacks
     def test_memory_footprint(self):
@@ -96,3 +105,4 @@ class TestAISProcesses(ItvTestCase):
 
         numResReturned = len(rspMsg.message_parameters_reference[0].dataResourceSummary)
         log.info('findDataResources returned: ' + str(numResReturned) + ' resources.')
+        
