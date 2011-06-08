@@ -12,16 +12,11 @@
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
-from uuid import uuid4
 
-from twisted.trial import unittest
 from twisted.internet import defer
-from ion.test.iontest import IonTestCase
 
-from ion.core.data import store
+
 from ion.core.data import cassandra
-from ion.core.data import index_store_service
-from ion.core.data import store_service
 from ion.core.data import storage_configuration_utility
 
 from ion.core.data.test import test_store as import_test_store
@@ -30,7 +25,6 @@ from ion.core.data.test import test_store as import_test_store
 from ion.core.object import workbench
 
 from ion.core.object import object_utils
-from ion.core.data.store import Query
 
 from ion.core import ioninit
 CONF = ioninit.config(__name__)

@@ -19,7 +19,6 @@ from ion.core.data import store
 
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
-from ion.util.itv_decorator import itv
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)

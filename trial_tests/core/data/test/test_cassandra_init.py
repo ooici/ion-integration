@@ -9,11 +9,8 @@
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
-from twisted.trial import unittest
 from twisted.internet import defer
 
-from ion.core.process import process
-from ion.util import procutils as pu
 from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
 from ion.test.iontest import IonTestCase
@@ -25,7 +22,6 @@ from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
 
-from ion.util.itv_decorator import itv
 
 
 

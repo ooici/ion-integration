@@ -18,7 +18,6 @@ CONF = ioninit.config(__name__)
 from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
 
-from ion.core.data.storage_configuration_utility import COMMIT_INDEXED_COLUMNS
 from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE, PERSISTENT_ARCHIVE
 
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS_CFG, ION_AIS_RESOURCES_CFG, PRELOAD_CFG
