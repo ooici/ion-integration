@@ -18,6 +18,7 @@ Contents:
 1) Introduction to the tools in ion-integration
 2) Setting up your environment
 3) Common use cases and tips
+4) Creating ITV tests
 
 
 1) Introduction to the tools in ion-integration
@@ -123,6 +124,58 @@ bin/itv --sysname=eoitest itv_start_files/boot_level_4_local.itv itv_start_files
 itv_start_files/boot_level_6.itv itv_start_files/boot_level_7.itv itv_start_files/boot_level_8.itv
 itv_start_files/boot_level_9.itv itv_start_files/boot_level_10.itv
 
+Once you have started the system using itv files you can run manual tests against the system
+** ping the services from the container shell
+
+$ bin/itv itv_start_files/boot_level_4_local.itv
+ITV files only specified, no tests: implying --debug-cc
+<type 'object'> __builtin__.object
+The following app_dependencies will be started:
+	res/deploy/bootlevel4_local.rel (via .itv file)
+Pausing before starting...
+Waiting for container to start: res/deploy/bootlevel4_local.rel
+	Lockfile appeared, waiting for container unlock...
+	Unlocked!
+DEBUG_CC:
+
+
+    ____                ______                    ____        __  __
+   /  _/____  ____     / ____/____  ________     / __ \__  __/ /_/ /_  ____  ____
+   / / / __ \/ __ \   / /    / __ \/ ___/ _ \   / /_/ / / / / __/ __ \/ __ \/ __ \
+ _/ / / /_/ / / / /  / /___ / /_/ / /  /  __/  / ____/ /_/ / /_/ / / / /_/ / / / /
+/___/ \____/_/ /_/   \____/ \____/_/   \___/  /_/    \__, /\__/_/ /_/\____/_/ /_/
+                                                    /____/
+ION Python Capability Container (version 0.4.22)
+[env: /Users/dstuebe/Documents/Dev/virtenvs/ioncore25/lib/python2.5/site-packages]
+[container id: dstuebe@dstuebe3.dynamic.ucsd.edu.14936]
+
+><> ping('datastore')
+<Deferred #0>
+Deferred #0 called back: None
+><> ping('datastoreXXX')
+<Deferred #1>
+><> 2011-06-09 12:16:35.413 [process        :824] WARNING:Process bootstrap RPC conv-id=dstuebe3_dynamic_ucsd_edu_14936.3#2 timed out!
+Deferred #1 failed: ''
+
+** run itv tests using regular trial - you have already manually started the system!
+You must set the ION_TEST_CASE_SYSNAME os env variable:
+
+$ export ION_TEST_CASE_SYSNAME=mysystem
+$ bin/trial itv_tests/boot_level_tests/test_bootlevel4.py
+itv_tests.boot_level_tests.test_bootlevel4
+  Bootlevel4ReadyTest
+    test_all_services ...                                                  [OK]
+
+-------------------------------------------------------------------------------
+Ran 1 tests in 1.729s
+
+PASSED (successes=1)
+
+
+* Using the ioncore-java-runnables directory you can register datasets for ingestion and fire updates!
+Add details here on how to get it and install it!
+
+
 * Turn off that annoying ncml Rsync:
     open the boot_level_8.itv file and change the do-init flag to False.
     ** Commit that change and I will take your little finger!
@@ -167,6 +220,29 @@ Be careful using cassandra - it is persistent between runs so it is best to tear
 *) Memory leak detection
 
  # Please add details
+
+
+
+4) Creating ITV tests
+
+ITV tests run against service which keep going in the background. Changes to the system are not isolated between tests.
+This is very different from our unit test framework. Since ION processes are running in seperate containers you can not
+get the process object and check state or interact with it - only through messaging!
+
+If existing tests in ioncore-python are written in a way that will work in ITV - then you can import those tests and
+use a mixin test class:
+
+Good example:
+from ion.integration.ais.test import test_app_integration as app_integration_module
+class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
+
+Bad example:
+from ion.integration.ais.test.test_app_integration import  AppIntegrationTest
+class TestAISProcesses(ItvTestCase, AppIntegrationTest):
+
+But you must import the module under a different name otherwise both the imported test and the new mixin class will run.
+This is a quirk of the trial framework - any module imported or in the path with the name test_* will be run.
+
 
 Change log:
 ===========

@@ -13,7 +13,7 @@ from iontest.iontest import ItvTestCase
 from ion.core import ioninit
 
 
-from ion.integration.ais.test.test_app_integration import AppIntegrationTest
+from ion.integration.ais.test import test_app_integration as app_integration_module
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
@@ -31,7 +31,7 @@ from ion.integration.ais.ais_object_identifiers import FIND_DATA_RESOURCES_REQ_M
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ANONYMOUS_USER_ID
 
 
-class TestAISProcesses(ItvTestCase, AppIntegrationTest):
+class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
     timeout = 77
 
     app_dependencies = ["res/apps/datastore.app",
