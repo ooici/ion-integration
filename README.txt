@@ -213,14 +213,20 @@ $ bin/cassandra_teardown
 Be careful using cassandra - it is persistent between runs so it is best to teardown and create a new setup for each test
 
 
-*) Using the Cprofiler
+*) Using the Python profiler 
 
- # Please add details
+ To use the python profiler pass in the --profiler argument to the itv script. This will run the profiler and save the
+output from each container process as a [service]_prof_output.prof file. Afterwards you can examine the profiling information
+using Python's pstats module.
+
+Here is an example on using the
+%bin/itv  --profiler=cProfile --sysname=sysname   itv_tests.integration.ais.test_ais.TestAISProcesses 
 
 *) Memory leak detection
 
- # Please add details
-
+The ItvTestCase class has a _print_memory_usage method. This prints out the RSS and VSIZE of each of the Capability Container's 
+UNIX process. This information is retrieved by calling /bin/ps. This should be done before and after performing an operation to see  
+how the operation affects the memory usage of the CC process.  
 
 
 4) Creating ITV tests
