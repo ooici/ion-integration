@@ -12,7 +12,7 @@ from twisted.trial import unittest
 from twisted.internet import defer
 
 from ion.core.data.cassandra import CassandraDataManager, CassandraStorageResource
-
+from ion.core.data import storage_configuration_utility
 from ion.core.object import workbench
 
 from ion.core.data import store
@@ -117,12 +117,17 @@ class CassandraDataManagerTest(IDataManagerTest):
         
         # Set only one host and port in the host list for now
         cas_host = cassandra_cluster.hosts.add()
-        cas_host.host = 'ec2-204-236-159-249.us-west-1.compute.amazonaws.com'
-        #cas_host.host = 'ec2-184-72-14-57.us-west-1.compute.amazonaws.com'
-        cas_host.port = 9160
+        
+        #host = CONF.getValue("host", None)
+        host = storage_configuration_utility.storage_provider["host"]
+        port = storage_configuration_utility.storage_provider["port"]
+        cas_host.host = host
+        cas_host.port = port
         
         ### Create a Credentials resource - for cassandra a SimplePassword object
         cache_repository, simple_password  = self.wb.init_repository(simple_password_type)
+        #We'll have to figure out how to pass the username and password in as part of the
+        #nightly build
         simple_password.username = 'ooiuser'
         simple_password.password = 'oceans11'
         
