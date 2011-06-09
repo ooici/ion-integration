@@ -216,7 +216,7 @@ Be careful using cassandra - it is persistent between runs so it is best to tear
 *) Using the Python profiler 
 
  To use the python profiler pass in the --profiler argument to the itv script. This will run the profiler and save the
-output from each container process as a [service]_prof_output.prof file. Afterwards you can examine the profiling information
+output from each container process as a [service].prof file. Afterwards you can examine the profiling information
 using Python's pstats module.
 
 Here is an example on using the
