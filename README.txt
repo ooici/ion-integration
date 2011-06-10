@@ -101,7 +101,7 @@ https://ooinetwork.webex.com/ooinetwork/ldr.php?AT=pb&SP=MC&rID=29081532&rKey=7e
     Step 4. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
 
     If you do bin/buildout you will use developement.cfg which gets the latest release of ioncore-python. If you wish
-    to use your development version of ioncore-python then do bin/buildout -dev-integration. This assumes that ioncore-python 
+    to use your development version of ioncore-python then do bin/buildout -c dev-integration.cfg. This assumes that ioncore-python 
     is in the same directory as the ion-integration project.
  
     Step 5.
