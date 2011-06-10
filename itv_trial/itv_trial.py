@@ -146,7 +146,7 @@ def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, sh
         #I assume that service is a string of this format res/apps/service.app
         app_file = service.split(os.sep)[-1]
         service_name = app_file.split(".")[0] 
-        sargs +=["--savestats", "--profiler="+ opts.profiler, "--profile", service_name+"_prof_output.prof"]
+        sargs +=["--savestats", "--profiler="+ opts.profiler, "--profile", service_name+".prof"]
     
     #Everything before the cc app are arguments to twistd, otherwise they are arguments to cc.
     sargs += ["cc", "-h", opts.hostname]

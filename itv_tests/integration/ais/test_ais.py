@@ -5,13 +5,9 @@
 tracks the memory process.
 """
 import time
-import ion.util.ionlog
 from twisted.internet import defer
 
 from iontest.iontest import ItvTestCase
-
-from ion.core import ioninit
-
 
 from ion.integration.ais.test import test_app_integration as app_integration_module
 
@@ -23,7 +19,7 @@ from ion.core.process.process import Process
 from ion.core.messaging.message_client import MessageClient
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
 from ion.services.coi.resource_registry.resource_client import ResourceClient
-
+from ion.services.coi.resource_registry.association_client import AssociationClient
 from ion.integration.ais.ais_object_identifiers import AIS_REQUEST_MSG_TYPE, AIS_RESPONSE_ERROR_TYPE
 
 from ion.integration.ais.ais_object_identifiers import FIND_DATA_RESOURCES_REQ_MSG_TYPE
@@ -32,8 +28,8 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ANONYMOUS_US
 
 
 class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
-    timeout = 77
-
+    timeout=77
+    
     app_dependencies = ["res/apps/datastore.app",
                        "res/apps/association.app",
                        "res/apps/resource_registry.app",
@@ -47,7 +43,7 @@ class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
                        "res/apps/notification_alert.app"
                        ]
 
-
+    
     @defer.inlineCallbacks
     def setUp(self):
         self.t = time.time()
@@ -59,6 +55,7 @@ class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
         self.mc = MessageClient(proc)
         self.aisc = AppIntegrationServiceClient(proc)
         self.rc = ResourceClient(proc)
+        self.ac  = AssociationClient(proc)
         self._proc = proc
     
     @defer.inlineCallbacks
