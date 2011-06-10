@@ -78,7 +78,10 @@
         -->
         <!-- <symlink link="${lib.dir}/eoi-agents.jar" resource="${lib.dir}/eoi-agents-${eoi.version}.jar"/> -->
         <!-- Rename the eoi-agents-x.x.x.jar to eoi-agents.jar so that configurations don't need to be changed -->
-        <move file="${lib.dir}/eoi-agents-${eoi.version}.jar" tofile="${lib.dir}/eoi-agents.jar"/>
+        <move todir="${lib.dir}">
+            <fileset dir="${lib.dir}"/>
+            <mapper type="regexp" from="(eoi-agents)-(.*)\.jar" to="\1.jar"/>
+        </move>
     </target>
     
 </project>

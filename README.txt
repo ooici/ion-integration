@@ -98,7 +98,11 @@ https://ooinetwork.webex.com/ooinetwork/ldr.php?AT=pb&SP=MC&rID=29081532&rKey=7e
     
     Step 3. python bootstrap.py (you only need to run this one)
     
-    Step 4. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
+    Step 4. Run buildout.  You run this as many times as you switch between buildout configuration files or you want to get the latest dependencies.
+
+        * bin/buildout -c dev-integration.cfg   ==> if you are running against ioncore-python source in your dev environment.
+        
+        * bin/buildout                          ==> if you are running against latest ioncore-python package.
 
     If you do bin/buildout you will use developement.cfg which gets the latest release of ioncore-python. If you wish
     to use your development version of ioncore-python then do bin/buildout -c dev-integration.cfg. This assumes that ioncore-python 
@@ -116,7 +120,7 @@ https://ooinetwork.webex.com/ooinetwork/ldr.php?AT=pb&SP=MC&rID=29081532&rKey=7e
         You will likely need specific entries in your ionlocal.config file to run any given test.
 
 
-* Clean buildout dependencies
+* Clean buildout dependencies (You won't need to do this unless something is really messed up...)
     To completely clean out buildout directories and start fresh:
     ant clean-buildout
 
