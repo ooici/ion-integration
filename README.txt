@@ -100,6 +100,10 @@ https://ooinetwork.webex.com/ooinetwork/ldr.php?AT=pb&SP=MC&rID=29081532&rKey=7e
     
     Step 4. bin/buildout (you run this as many times as you change buildout.cfg and/or its parent files.
 
+    If you do bin/buildout you will use developement.cfg which gets the latest release of ioncore-python. If you wish
+    to use your development version of ioncore-python then do bin/buildout -dev-integration. This assumes that ioncore-python 
+    is in the same directory as the ion-integration project.
+ 
     Step 5.
         a. bin/trial itv_trial
         b. bin/itv itv_trial
@@ -221,6 +225,9 @@ using Python's pstats module.
 
 Here is an example on using the
 %bin/itv  --profiler=cProfile --sysname=sysname   itv_tests.integration.ais.test_ais.TestAISProcesses 
+
+There is a script in the scripts directory that reads in each of the .prof files and prints out the top 50 functions
+that were called the most times, and the top 50 functions that took the most internal time. 
 
 *) Memory leak detection
 
