@@ -28,7 +28,6 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ANONYMOUS_US
 
 
 class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
-    timeout=77
     
     app_dependencies = ["res/apps/datastore.app",
                        "res/apps/association.app",
