@@ -2,7 +2,7 @@
 
 # Select the number of instances of the level four services to run...
 
-("res/deploy/bootlevel4.rel","id=1", "cassandra_username=myusername", "cassandra_password=mypassword"),
+("res/deploy/bootlevel4.rel","id=1", "do-init=True"),
 #("res/deploy/bootlevel4.rel","id=2", "do-init=False"),
 #("res/deploy/bootlevel4.rel","id=3", "do-init=False"),
 #("res/deploy/bootlevel4.rel","id=4", "do-init=False"),
