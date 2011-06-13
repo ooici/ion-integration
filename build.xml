@@ -77,11 +77,14 @@
         NOTE:  While creation of the symlink works as expected - it's not possible to launch a jar "through" a symlink, so this method won't work...
         -->
         <!-- <symlink link="${lib.dir}/eoi-agents.jar" resource="${lib.dir}/eoi-agents-${eoi.version}.jar"/> -->
-        <!-- Rename the eoi-agents-x.x.x.jar to eoi-agents.jar so that configurations don't need to be changed -->
+        <!-- Rename the eoi-agents-x.x.x.jar to eoi-agents.jar so that configurations don't need to be changed
+            Can not move it to a generic name - we need the version number in the name.
+
         <move todir="${lib.dir}">
             <fileset dir="${lib.dir}"/>
             <mapper type="regexp" from="(eoi-agents)-(.*)\.jar" to="\1.jar"/>
         </move>
+        -->
     </target>
     
 </project>
