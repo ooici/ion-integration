@@ -20,7 +20,6 @@ from ion.core.process.process import Process
 from ion.test.iontest import IonTestCase
 
 from ion.services.coi.resource_registry.resource_client import ResourceClient
-from ion.services.coi.datastore_bootstrap.ion_preload_config import PRELOAD_CFG, ION_DATASETS_CFG
 
 BLOB_TYPE = object_utils.create_type_identifier(object_id=2540, version=1)
 class MusicVerificationTest(IonTestCase):
