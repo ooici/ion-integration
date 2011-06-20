@@ -117,6 +117,8 @@ class IntTestIngest(ItvTestCase):
 
         datasource.update_interval_seconds = 86400
 
+        datasource.aggregation_rule = datasource.AggregationRule.OVERLAP
+
         #datasource.authentication = datasource.CreateObject(THREDDS_AUTHENTICATION_TYPE)
         #datasource.authentication.name = 'cgsn'
         #datasource.authentication.password = "ISMT2!!"
