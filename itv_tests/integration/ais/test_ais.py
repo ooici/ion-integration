@@ -20,11 +20,7 @@ from ion.core.messaging.message_client import MessageClient
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
 from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.services.coi.resource_registry.association_client import AssociationClient
-from ion.integration.ais.ais_object_identifiers import AIS_REQUEST_MSG_TYPE, AIS_RESPONSE_ERROR_TYPE
 
-from ion.integration.ais.ais_object_identifiers import FIND_DATA_RESOURCES_REQ_MSG_TYPE
-
-from ion.services.coi.datastore_bootstrap.ion_preload_config import ANONYMOUS_USER_ID
 
 
 class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
@@ -67,39 +63,3 @@ class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
         log.info("Started the containers")
         
      
-        
-    @defer.inlineCallbacks
-    def test_memory_footprint(self):
-        """
-        Test for the return of notificationSet field: this is in a separate test
-        to make it convenient for unit testing.  The notificationSet field is
-        actually returned in the findDataResources response, but it will only
-        be set if there is a subscription set for a dataset/userID combo, which
-        this test scenario sets up.
-        """
-
-        log.debug('Testing findDataResources.')
-
-        #
-        # Send a message with no bounds
-        #
-        
-        # Create a message client
-        
-        # create a request message 
-        reqMsg = yield self.mc.create_instance(AIS_REQUEST_MSG_TYPE)
-        reqMsg.message_parameters_reference = reqMsg.CreateObject(FIND_DATA_RESOURCES_REQ_MSG_TYPE)
-
-        reqMsg.message_parameters_reference.user_ooi_id  = ANONYMOUS_USER_ID
-        print "Calling find data resources"
-        d = self.aisc.findDataResources(reqMsg)
-        
-        yield d
-        log.info("findDataResources complete")
-        rspMsg = d.result
-        if rspMsg.MessageType == AIS_RESPONSE_ERROR_TYPE:
-            self.fail("findDataResources failed: " + rspMsg.error_str)
-
-        numResReturned = len(rspMsg.message_parameters_reference[0].dataResourceSummary)
-        log.info('findDataResources returned: ' + str(numResReturned) + ' resources.')
-        
