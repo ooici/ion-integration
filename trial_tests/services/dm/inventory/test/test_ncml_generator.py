@@ -18,7 +18,7 @@ import ion.util.ionlog
 from ion.test.iontest import IonTestCase
 
 from ion.services.dm.inventory.ncml_generator import create_ncml, rsync_ncml, \
-    rsa_to_dot_ssh, ssh_add, do_complete_rsync, clear_ncml_files
+    rsa_to_dot_ssh, do_complete_rsync, clear_ncml_files
 from ion.services.dm.inventory import ncml_generator
 
 log = ion.util.ionlog.getLogger(__name__)
@@ -53,8 +53,8 @@ class PSAT(IonTestCase):
         ncml_generator.RSYNC_CMD = 'echo'
 
         self._make_some_datafiles(5)
-
-        yield rsync_ncml(self.filedir, self.server_url)
+        rsa_key_fn = os.path.join(os.path.dirname(__file__), 'data', 'id_rsa')
+        yield rsync_ncml(self.filedir, self.server_url, rsa_key_fn)
 
     def _make_some_datafiles(self, num_files):
         for idx in range(num_files):
@@ -84,19 +84,6 @@ class PSAT(IonTestCase):
         os.unlink(pkf)
         os.unlink(pubkf)
 
-    @defer.inlineCallbacks
-    def test_ssh_add(self):
-        pubkey = self._get_public_key()
-        privkey= self._get_rsa_key()
-        # This throws IOError if a fault, which will fail the test
-        pkf, pubkf = rsa_to_dot_ssh(privkey, public_key=pubkey)
-
-        yield ssh_add(pkf)
-
-        yield ssh_add(pubkf, remove=True)
-        
-        os.unlink(pkf)
-        os.unlink(pubkf)
 
     @defer.inlineCallbacks
     def test_complete(self):
