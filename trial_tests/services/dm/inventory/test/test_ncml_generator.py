@@ -3,6 +3,7 @@
 """
 @file ion/services/dm/inventory/test/test_ncml_generator.py
 @author Paul Hubbard
+@author Matt Rodriguez
 @date 5/2/11
 @test ion.services.dm.inventory.ncml_generator Test suite for the NcML code
 """
@@ -11,7 +12,6 @@ import os
 import tempfile
 from uuid import uuid4
 
-from twisted.trial import unittest
 from twisted.internet import defer
 from ion.core import ioninit
 import ion.util.ionlog
@@ -95,19 +95,29 @@ class PSAT(IonTestCase):
 
         yield do_complete_rsync(self.filedir, self.server_url, privkey, pubkey)
 
+    """"
+    This test is commented out because it requires that there is a unittest account on 
+    amoeba that has the id_rsa.pub public key in its ~/.ssh/authorized_keys directory. Since 
+    the user account and the hostname are in the test, and the private key is distributed in 
+    the data directory, it is not a good idea to have the public key in the authorized_keys files. 
+    
+    
     @defer.inlineCallbacks
     def test_complete_realkey(self):
 
-        rsa_key_fn = os.path.join(os.path.dirname(__file__), 'data', 'datactlr.rsa')
-
+        rsa_key_fn = os.path.join(os.path.dirname(__file__), 'data', 'id_rsa')
+        
         # Only run this test iff you have the required keyfile locally.
         if not os.path.exists(rsa_key_fn):
             raise unittest.SkipTest('Missing RSA key %s' % rsa_key_fn)
         
         privkey = open(rsa_key_fn, 'r').read()
-        rsa_key_fn = os.path.join(os.path.dirname(__file__), 'data', 'datactlr.pub')
+        #rsa_key_fn = os.path.join(os.path.dirname(__file__), 'data', 'datactlr.pub')
+        rsa_key_pub = self._get_public_key()
         pubkey = open(rsa_key_fn, 'r').read()
 
         self._make_some_datafiles(5)
-
-        yield do_complete_rsync(self.filedir, self.server_url, privkey, pubkey)
+        server_url = 'unittest@amoeba.ucsd.edu:/opt/ncml'
+        print os.listdir(self.filedir)
+        yield do_complete_rsync(self.filedir, server_url, privkey, pubkey)
+    """
