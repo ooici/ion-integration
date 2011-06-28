@@ -63,6 +63,8 @@ class CassandraManagerTester(IonTestCase):
         yield self._shutdown_processes()
         yield self._stop_container()
 
+    def test_instantiate(self):
+        pass
 
     @defer.inlineCallbacks
     def test_create_archive(self):
