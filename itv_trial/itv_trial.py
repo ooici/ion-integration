@@ -398,7 +398,13 @@ def main():
             else:
                 # spawn an interactive twistd shell into this system
                 print "DEBUG_CC:"
-                sargs = build_twistd_args("", "", 'debugcc.pid', 'debugcc.log', None, opts, True)
+
+                uniqueid = uuid4()
+                basepath = os.path.join(tempfile.gettempdir(), 'cc-%s' % (str(uniqueid)))
+                pidfile = '%s-debug-cc.pid' % (basepath)
+                logfile = '%s-debug-cc.log' % (basepath)
+
+                sargs = build_twistd_args("", "", pidfile, logfile, None, opts, True)
                 os.execve("bin/twistd", sargs, newenv)
 
         def cleanup():

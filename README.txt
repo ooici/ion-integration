@@ -73,6 +73,11 @@ bin/itv --sysname=mytest_sysname itv_start_files/boot_level_4_local.itv
 itv_start_files/boot_level_5.itv itv_start_files/boot_level_6.itv itv_start_files/boot_level_7.itv itv_start_files/boot_level_8.itv
 itv_start_files/boot_level_9.itv itv_start_files/boot_level_10.itv
 
+It is possible to open multiple sessions of the debug CC shell, launching any number of .itv files
+in each of those itv runs.  This allows you to for example start boot levels 4-8 in one container,
+then if you are working on a service in bootlevel 9, start that in another terminal and restart
+just that container/service manually.
+
 To watch a demonstration of the ion-integration tools see:
 https://ooinetwork.webex.com/ooinetwork/ldr.php?AT=pb&SP=MC&rID=29081532&rKey=7e48a71a4b4dead4
 
