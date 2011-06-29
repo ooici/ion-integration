@@ -11,7 +11,7 @@ import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 from twisted.internet import defer
 
-
+from ion.util.iontime import IonTime
 from ion.core import ioninit
 from ion.services.coi.datastore_bootstrap.ion_preload_config import PRELOAD_CFG, ION_DATASETS_CFG, SAMPLE_PROFILE_DATASET_ID, TYPE_CFG, NAME_CFG, DESCRIPTION_CFG, CONTENT_CFG, ID_CFG
 
@@ -31,6 +31,18 @@ GROUP_TYPE = create_type_identifier(object_id=10020, version=1)
 
 
 CONF = ioninit.config(__name__)
+
+
+class FakeDelayedCall(object):
+
+    def active(self):
+        return True
+
+    def cancel(self):
+        pass
+
+    def delay(self, int):
+        pass
 
 
 class IngestionTest(IonTestCase):
@@ -94,7 +106,9 @@ class IngestionTest(IonTestCase):
         ingestion1 = yield self.sup.get_child_id('ingestion1')
         log.debug('Process ID:' + str(ingestion1))
         self.ingest= self._get_procinstance(ingestion1)
-
+        
+        self.ingest.timeoutcb = FakeDelayedCall()
+        
         ds1 = yield self.sup.get_child_id('ds1')
         log.debug('Process ID:' + str(ds1))
         self.datastore= self._get_procinstance(ds1)
@@ -211,6 +225,8 @@ class IngestionTest(IonTestCase):
             dataset.root_group = group
             return True
 
+
+        
         data_set_description = {ID_CFG:new_dataset_id,
                       TYPE_CFG:DATASET_TYPE,
                       NAME_CFG:'Blank dataset for testing ingestion',
@@ -219,7 +235,8 @@ class IngestionTest(IonTestCase):
                       }
 
         self.datastore._create_resource(data_set_description)
-
+        log.info('Created Dataset Resource for test.')
+         
         ds_res = self.datastore.workbench.get_repository(new_dataset_id)
 
 
@@ -229,28 +246,61 @@ class IngestionTest(IonTestCase):
         # ============================================
         # Don't need a real data source at this time!
         # ============================================
+        def create_datasource(datasource, *args, **kwargs):
+            """
+            Create an empty dataset
+            """
+            datasource.source_type = datasource.SourceType.NETCDF_S
+            datasource.request_type = datasource.RequestType.DAP
 
-        log.info('Created Dataset Resource for test.')
+            datasource.base_url = "http://not_a_real_url.edu"
+
+            datasource.max_ingest_millis = 6000
+
+            datasource.registration_datetime_millis = IonTime().time_ms
+
+            datasource.ion_title = "NTAS1 Data Source"
+            datasource.ion_description = "Data NTAS1"
+
+            datasource.aggregation_rule = datasource.AggregationRule.OVERLAP
+
+            return True
+
+        data_source_description = {ID_CFG:new_datasource_id,
+                      TYPE_CFG:DATASOURCE_TYPE,
+                      NAME_CFG:'datasource for testing ingestion',
+                      DESCRIPTION_CFG:'An example of a station datasource',
+                      CONTENT_CFG:create_datasource,
+                      }
+
+        self.datastore._create_resource(data_source_description)
 
         # Receive a dataset to get setup...
         content = yield self.ingest.mc.create_instance(PERFORM_INGEST_MSG_TYPE)
         content.dataset_id = new_dataset_id
         content.datasource_id = new_datasource_id
+        dsource_res = self.datastore.workbench.get_repository(new_datasource_id)
+        log.info('Created Datasource Resource for test.')
 
+        #yield self.datastore.workbench.flush_repo_to_backend(dset_res)
+        yield self.datastore.workbench.flush_repo_to_backend(dsource_res)
+
+        log.info('Data resources flushed to backend')
         # Now fake the receipt of the dataset message
 
         @defer.inlineCallbacks
         def do_file_update(file):
-
+            
+            log.info("Calling _prepare_ingest")
             yield self.ingest._prepare_ingest(content)
-
+            log.info("Callying create_instance")
             cdm_dset_msg = yield self.ingest.mc.create_instance(CDM_DATASET_TYPE)
             yield bootstrap_byte_array_dataset(cdm_dset_msg, self, filename=file)
 
             log.info('Calling Receive Dataset')
 
             # Call the op of the ingest process directly
-            yield self.ingest.op_recv_dataset(cdm_dset_msg, '', self.fake_msg())
+            yield self.ingest._ingest_op_recv_dataset(cdm_dset_msg, '', self.fake_msg())
 
             log.info('Calling Receive Dataset: Complete')
 
@@ -259,7 +309,7 @@ class IngestionTest(IonTestCase):
             log.info('Calling Receive Done')
 
             complete_msg.status = complete_msg.StatusCode.OK
-            yield self.ingest.op_recv_done(complete_msg, '', self.fake_msg())
+            yield self.ingest._ingest_op_recv_done(complete_msg, '', self.fake_msg())
 
             yield self.ingest.rc.put_instance(self.ingest.dataset)
 
