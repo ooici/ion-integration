@@ -53,8 +53,7 @@ class PSAT(IonTestCase):
         ncml_generator.RSYNC_CMD = 'echo'
 
         self._make_some_datafiles(5)
-        rsa_key_fn = os.path.join(os.path.dirname(__file__), 'data', 'id_rsa')
-        yield rsync_ncml(self.filedir, self.server_url, rsa_key_fn)
+        yield rsync_ncml(self.filedir, self.server_url)
 
     def _make_some_datafiles(self, num_files):
         for idx in range(num_files):
