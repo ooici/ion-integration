@@ -31,7 +31,7 @@ class LargeCodecTest(unittest.TestCase):
         filename = CONF.getValue('filename', None)
         
         if filename is None:
-            self.fail("The filename for this test is not configured")
+            self.fail("The filename for this test is not configured.")
 
         filename = pu.get_ion_path(filename)
         
