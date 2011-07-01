@@ -5,6 +5,8 @@
 @test ion.play.hello_resource Example unit tests for sample resource code.
 @author David Stuebe
 """
+import tempfile
+
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
@@ -39,7 +41,9 @@ class DatasetControllerTest(IonTestCase):
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
-
+        
+        tempdir = tempfile.mkdtemp()
+        
         services = [
 
             {'name':'ds1','module':'ion.services.coi.datastore','class':'DataStoreService',
@@ -60,7 +64,7 @@ class DatasetControllerTest(IonTestCase):
             {'name':'dataset_controller',
              'module':'ion.services.dm.inventory.dataset_controller',
              'class':'DataSetController',
-             'spawnargs': {'do-init' : False}},
+             'spawnargs': {'do-init' : False, 'ncml_path': tempdir }},
         ]
 
 
