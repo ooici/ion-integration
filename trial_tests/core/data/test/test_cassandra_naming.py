@@ -2,7 +2,7 @@
 
 """
 @file trial_tests/core/data/test/test_cassandra_init.py
-@author David Stuebe
+@author Matt Rodriguez
 
 """
 
@@ -15,7 +15,7 @@ from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
 from ion.test.iontest import IonTestCase
 
-from telephus.cassandra.ttypes import InvalidRequestException, KsDef
+from telephus.cassandra.ttypes import InvalidRequestException
 
 
 from ion.core import ioninit
@@ -26,7 +26,9 @@ CONF = ioninit.config(__name__)
 
 
 class CassandraSchemaProviderTest(IonTestCase):
-
+    """
+    This class should probably be moved into the Cassanda init test module
+    """
 
     keyspace = 'Hyphens-are-illegal-characters-for-keyspace-names'
 
