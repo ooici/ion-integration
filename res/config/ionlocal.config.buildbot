@@ -1,0 +1,116 @@
+
+
+{
+
+'ion.services.coi.datastore_bootstrap.ion_preload_config':{
+    # Path to files relative to ioncore-python directory!
+    'sample_traj_dataset' : './ion_data/SOS_Test.ooicdm.tgz',
+	'sample_station_dataset' : './ion_data/USGS_Test.ooicdm.tgz',
+
+	'sample_hycom_dataset':'./ion_data/HYCOM.ooicdm.tgz',
+	'sample_split_hycom_dataset':'./ion_data/HYCOM_1mb.tgz',
+
+    'samples_ntas_rt_mooring1_dataset':'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1.ooicdm.tgz',
+    'samples_ntas_rt_mooring2_dataset':'./ion_data/NTAS_10_Real-time_Mooring_Data_System_2.ooicdm.tgz',
+
+    'samples_whots_nrt_mooring1_dataset':'./ion_data/WHOTS_7_near-real-time_Mooring_Data_System_1.ooicdm.tgz',
+    'samples_whots_nrt_mooring2_dataset':'./ion_data/WHOTS_7_near-real-time_Mooring_Data_System_2.ooicdm.tgz',
+
+    'sample_rain_gauge_dataset':'./ion_data/7723_Moanalua_RG_No_1_at_alt_1000_ft_Oahu_HI_(212359157502601)_-_Instantaneous_Value.ooicdm.tgz',
+    'sample_choptank_river_dataset':'./ion_data/CHOPTANK_RIVER_NEAR_GREENSBORO_MD_(01491000)_-_Instantaneous_Value.ooicdm.tgz',
+    'sample_connecticut_river_dataset':'./ion_data/CONNECTICUT_RIVER_AT_THOMPSONVILLE_CT_(01184000)_-_Instantaneous_Value.ooicdm.tgz',
+
+},
+
+'trial_tests.core.object.test.test_codec':{	
+'filename' : 
+'./ion_data/WHOTS_7_near-real-time_Mooring_Data_System_2.ooicdm.tgz',
+},
+
+
+'trial_tests.services.dm.ingestion.test.test_ingestion':{
+# Path to files relative to ioncore-python directory!
+'ingest_files' :
+[
+'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1.ooicdm.tgz',
+'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1_u1.ooicdm.tgz',
+'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1_u2.ooicdm.tgz'
+],
+},
+
+
+'ion.test.iontest':{
+    'broker_host' : 'rabbitmq-dev0',
+    },
+
+
+'ion.services.coi.datastore':{
+    'preload': {'ion_datasets':True},
+    'sysname': 'sysname_dev'
+},
+
+'ion.services.dm.preservation.cassandra_manager_agent':{
+         'host': 'cassandra-dev01',
+         'port': 9160,
+         'username': 'notrealuser',
+         'password': 'nopass'
+        },
+
+
+'trial_tests.services.dm.inventory.test.test_association_service':{
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'sysname': 'sysname_dev',
+    'storage provider':{'host':'cassandra-dev01','port':9160}
+ },
+
+'trial_tests.core.data.test.test_cassandra_store':{
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'storage provider':{'host':'cassandra-dev01','port':9160}
+ },
+
+'ion.core.data.cassandra_schema_script':{
+#######
+# Used to run cassandra config script:
+#bin/mypython ion/core/data/cassandra_schema_script.py
+######
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'sysname':'eoitest',
+    'error_if_existing':False,
+},
+
+'ion.core.data.storage_configuration_utility':{
+    'storage provider':{'host':'cassandra-dev01','port':9160},
+    'persistent archive':{}
+},
+
+
+'ion.core.data.cassandra_teardown_script':{
+#######
+# Used to run cassandra config script:
+#bin/mypython ion/core/data/cassandra_schema_script.py
+######
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'sysname':'eoitest',
+},
+
+'ion.services.dm.inventory.dataset_controller' :{
+    'update_interval' : 30,
+    'ncml_path': '/tmp/ncml',
+    'thredds_ncml_url':'datactlr@thredds.oceanobservatories.org:/opt/tomcat/test_ncml',
+},
+
+# pfh NcML generator - uses rsync to move data
+'ion.services.dm.inventory.ncml_generator' : {
+    # rsync binary set to harmless 'echo' command
+    'rsync' : 'echo',
+},
+
+
+
+
+
+}
