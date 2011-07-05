@@ -58,7 +58,8 @@ class MusicVerificationTest(IonTestCase):
         buf = get_back_song.blob
         fout = open("../data/zoidberg_out.mp3", "wb")
         fout.write(buf)
-        subprocess.Popen(["/usr/bin/afplay", "../data/zoidberg_out.mp3"])
+        #If you have afplay installed in /usr/bin/, uncomment the following line for a chuckle.
+        #subprocess.Popen(["/usr/bin/afplay", "../data/zoidberg_out.mp3"])
         
     @defer.inlineCallbacks
     def tearDown(self):

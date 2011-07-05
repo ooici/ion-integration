@@ -28,10 +28,13 @@ class LargeCodecTest(unittest.TestCase):
 
     def test_copy_large_structure(self):
 
-        filename = CONF.getValue('filename')
+        filename = CONF.getValue('filename', None)
+        
+        if filename is None:
+            self.fail("The filename for this test is not configured.")
 
         filename = pu.get_ion_path(filename)
-
+        
         tar = tarfile.open(filename, 'r')
         f = tar.extractfile(tar.next())
         #f = open(filename,'r')
