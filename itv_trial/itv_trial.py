@@ -397,7 +397,7 @@ def main():
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
                 # spawn an interactive twistd shell into this system
-                print "DEBUG_CC:"
+                print >> sys.stderr, "DEBUG_CC:"
 
                 uniqueid = uuid4()
                 basepath = os.path.join(tempfile.gettempdir(), 'cc-%s' % (str(uniqueid)))
