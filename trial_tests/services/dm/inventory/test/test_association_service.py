@@ -50,13 +50,15 @@ class CassandraBackedAssociationServiceTest(AssociationServiceTest):
              'spawnargs':{COMMIT_CACHE:'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
                       BLOB_CACHE:'ion.core.data.cassandra_bootstrap.CassandraStoreBootstrap',
                       PRELOAD_CFG:{ION_DATASETS_CFG:True, ION_AIS_RESOURCES_CFG:True},
-                       }
+                      "username": username,
+                      "password": password}
             },
             {'name':'association_service',
              'module':'ion.services.dm.inventory.association_service',
              'class':'AssociationService',
              'spawnargs':{'index_store_class': 'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
-                         }
+                         "username": username,
+                         "password": password}
                 }
     ]
 
