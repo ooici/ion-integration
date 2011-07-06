@@ -52,8 +52,8 @@
 'ion.services.dm.preservation.cassandra_manager_agent':{
          'host': 'cassandra-dev01',
          'port': 9160,
-         'username': 'notrealuser',
-         'password': 'nopass'
+         'cassandra_username':None,
+         'cassandra_password':None 
         },
 
 
