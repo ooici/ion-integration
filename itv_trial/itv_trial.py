@@ -86,16 +86,16 @@ def get_opts():
     """
     p = optparse.OptionParser()
 
-    p.add_option("--sysname",   action="store",     dest="sysname", help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
-    p.add_option("--hostname",  action="store",     dest="hostname",help="Connect to the broker at this hostname. If not specified, uses localhost.")
-    p.add_option("--profiler",  action="store",     dest="profiler",help="Use the profiler cprofiler, hotspot, etc for each twistd container process. This saves the profiler output in a file service_prof_output.prof.")
-    p.add_option("--merge",     action="store_true",dest="merge",   help="Merge the environment for all integration tests and run them in one shot.")
-    p.add_option("--no-pause",  action="store_true",dest="nopause", help="Do not pause after finding all tests and deps to run.")
-    p.add_option("--debug",     action="store_true",dest="debug",   help="Prints verbose debugging messages.")
-    p.add_option("--debug-cc",  action="store_true",dest="debug_cc",help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
-    p.add_option("--wrap-twisted-bin", action="store",dest="wrapbin",help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
-
-    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False)  # make up a new random sysname
+    p.add_option("--sysname",         action="store",     dest="sysname",  help="Use this sysname for CCs/trial. If not specified, one is automatically generated.")
+    p.add_option("--hostname",        action="store",     dest="hostname", help="Connect to the broker at this hostname. If not specified, uses localhost.")
+    p.add_option("--profiler",        action="store",     dest="profiler", help="Use the profiler cprofiler, hotspot, etc for each twistd container process. This saves the profiler output in a file service_prof_output.prof.")
+    p.add_option("--merge",           action="store_true",dest="merge",    help="Merge the environment for all integration tests and run them in one shot.")
+    p.add_option("--no-pause",        action="store_true",dest="nopause",  help="Do not pause after finding all tests and deps to run.")
+    p.add_option("--debug",           action="store_true",dest="debug",    help="Prints verbose debugging messages.")
+    p.add_option("--debug-cc",        action="store_true",dest="debug_cc", help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
+    p.add_option("--wrap-twisted-bin",action="store",     dest="wrapbin",  help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
+    p.add_option("--trial-args",      action="store",     dest="trialargs",help="Arguments passed in to trial, i.e. -u or --coverage")
+    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False, trialargs=None )  # make up a new random sysname
     return p.parse_args()
 
 def get_test_classes(testargs, debug=False):
@@ -391,9 +391,15 @@ def main():
                 # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
                 if len(all_x) == 1:
                     trialargs = args
+                
                 else:
                     trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
-                    
+                
+                #Pass in args to trial
+                targs = opts.trialargs
+                if targs is not None:
+                    trialargs.insert(0, targs)  
+                
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
             else:
                 # spawn an interactive twistd shell into this system
