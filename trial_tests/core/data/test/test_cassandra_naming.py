@@ -13,6 +13,7 @@ from twisted.internet import defer
 
 from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
+from ion.core.data.storage_configuration_utility import PERSISTENT_ARCHIVE
 from ion.test.iontest import IonTestCase
 
 from telephus.cassandra.ttypes import InvalidRequestException
@@ -40,7 +41,7 @@ class CassandraSchemaProviderTest(IonTestCase):
         self.pword = CONF.getValue('cassandra_password', None)
 
         storage_conf = storage_configuration_utility.get_cassandra_configuration(self.keyspace)
-
+        storage_conf[PERSISTENT_ARCHIVE]["name"] = self.keyspace
         # Use a test harness cassandra client to set it up the way we want it for the test and tear it down
         test_harness = cassandra_bootstrap.CassandraSchemaProvider(self.uname, self.pword, storage_conf, error_if_existing=False)
 
@@ -74,7 +75,13 @@ class CassandraSchemaProviderTest(IonTestCase):
     def test_bad_keyspace_name(self):
         raised_exception = False
         try:
-            yield self.test_harness.run_cassandra_config()
+            #We need to change the keyspace name in each of the cf_defs to force the error
+            storage_conf = storage_configuration_utility.get_cassandra_configuration(self.keyspace)
+            for d  in storage_conf[PERSISTENT_ARCHIVE]["cf_defs"]:
+                d["keyspace"] = self.keyspace
+            #Set the keyspace name of the persistent archive    
+            storage_conf[PERSISTENT_ARCHIVE]["name"] = self.keyspace
+            yield self.test_harness.run_cassandra_config(storage_conf)
         except InvalidRequestException, ire:
             log.info(ire)
             ire2 = InvalidRequestException('Invalid keyspace name: ' + self.keyspace)
