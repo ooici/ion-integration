@@ -43,7 +43,7 @@ class VVDM8(VVBase):
         # subscriber so we can just see something is happening
         self._ingest_sub = IngestionProcessingEventSubscriber(process=self._mo)
         def _print_ingest(dat):
-            print "INGEST PROCESSING"
+            print "INGEST PROCESSING:", dat['content'].additional_data.processing_step
 
         self._ingest_sub.ondata = _print_ingest
 
