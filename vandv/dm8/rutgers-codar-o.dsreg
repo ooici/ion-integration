@@ -1,0 +1,18 @@
+# DataSourceResource:9211
+{
+"user_id": "A7B44115-34BC-4553-B51E-1D87617F12E0",
+"source_type": "NETCDF_S",
+"request_type": "DAP",
+"dataset_url": "http://tashtego.marine.rutgers.edu:8080/thredds/dodsC/cool/codar/totals/macoora6km",
+"max_ingest_millis": 60000,
+"ncml_mask": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><netcdf xmlns=\"http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2\" location=\"***lochold***\"><attribute name=\"title\" value=\"Codar Totals/Macoora 6km Totals\"/><attribute name=\"institute\" value=\"RUTGERS IMCS\"/><attribute name=\"source\" value=\"Coastal Ocean Dynamics Applications Radar\"/></netcdf>",
+"ion_title": "Codar Totals/Macoora 6km Totals",
+"ion_institution_id": "RUTGERS IMCS",
+"ion_description": "CODAR HFRADAR data",
+"update_interval_seconds": 0,
+"is_public": true,
+"initial_starttime_offset_millis": 86400000,
+"starttime_offset_millis": 0,
+"endtime_offset_millis": 0,
+"aggregation_rule": "OVERLAP"
+}
