@@ -49,6 +49,8 @@
     'sysname': 'sysname_dev'
 },
 
+
+
 'ion.services.dm.preservation.cassandra_manager_agent':{
          'host': 'cassandra-dev01',
          'port': 9160,
@@ -56,6 +58,11 @@
          'cassandra_password':None 
         },
 
+
+'trial_tests.services.coi.test.test_datastore':{
+    'cassandra_username':None,
+    'cassandra_password':None, 
+ },
 
 'trial_tests.services.dm.inventory.test.test_association_service':{
     'cassandra_username':None,
@@ -65,6 +72,18 @@
  },
 
 'trial_tests.core.data.test.test_cassandra_store':{
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'storage provider':{'host':'cassandra-dev01','port':9160}
+ },
+
+'trial_tests.core.data.test.test_cassandra_init':{
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'storage provider':{'host':'cassandra-dev01','port':9160}
+ },
+
+'trial_tests.core.data.test.test_cassandra_naming':{
     'cassandra_username':None,
     'cassandra_password':None,
     'storage provider':{'host':'cassandra-dev01','port':9160}
