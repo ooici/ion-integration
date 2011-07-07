@@ -92,7 +92,7 @@ class VVDM8(VVBase):
         self._def_sup_added = defer.Deferred()
 
     @defer.inlineCallbacks
-    def no_s3_generate_update_2(self):
+    def s3_generate_update_2(self):
         """
         3. Instruct next dataset agent to grab any supplemental data (again)
         """
