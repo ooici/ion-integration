@@ -43,7 +43,7 @@ class VVDM8(VVBase):
         # subscriber so we can just see something is happening
         self._ingest_sub = IngestionProcessingEventSubscriber(process=self._mo)
         def _print_ingest(dat):
-            print "INGEST PROCESSING"
+            print "INGEST PROCESSING:", dat['content'].additional_data.processing_step
 
         self._ingest_sub.ondata = _print_ingest
 
@@ -92,7 +92,7 @@ class VVDM8(VVBase):
         self._def_sup_added = defer.Deferred()
 
     @defer.inlineCallbacks
-    def no_s3_generate_update_2(self):
+    def s3_generate_update_2(self):
         """
         3. Instruct next dataset agent to grab any supplemental data (again)
         """
