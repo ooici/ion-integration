@@ -23,8 +23,8 @@ class VVDM13(VVBase):
                                      "itv_start_files/boot_level_7.itv",
                                      "itv_start_files/boot_level_8.itv",
                                      "itv_start_files/boot_level_9.itv",
-                                     "itv_start_files/3x_ingestion.itv",
-                                     "itv_start_files/4x_boot_level_10.itv"])   # four JAWs
+                                     "itv_start_files/4x_ingestion.itv",        # 5x ingestions total (1 from level 9)
+                                     "itv_start_files/5x_boot_level_10.itv"])   # 5x jaw
 
         # message observer - spawning here means we don't have to listen to startup stuff
         self._mo = InteractionObserver()
@@ -37,7 +37,7 @@ class VVDM13(VVBase):
         self._sub = DatasetSupplementAddedEventSubscriber(process=self._mo)
         def ingest_succeeded(msg):
             self._added_count += 1
-            if self._added_count == 4:
+            if self._added_count == 5:
                 self._def_sup_added.callback(self._added_count)
 
         self._sub.ondata = ingest_succeeded
@@ -71,27 +71,32 @@ class VVDM13(VVBase):
         defer.returnValue(None)
 
     @defer.inlineCallbacks
-    def s1_ingest_4(self):
+    def s1_ingest_5(self):
         """
-        1. Start ingestion on four .dsreg files at once
+        1. Start ingestion on five .dsreg files at once
         """
 
-        #dlist = defer.DeferredList([self._ingest_dataset('ndbc_sos-44014_airtemp.dsreg'),
-        #                            self._ingest_dataset('ndbc_sos-44014_currents.dsreg'),
-        #                            self._ingest_dataset('ndbc_sos-44014_winds.dsreg'),
-        #                            self._ingest_dataset('ndbc_sos-44013_sea_water_electrical_conductivity.dsreg')])
+        dlist = defer.DeferredList([self._ingest_dataset('ndbc_sos-44014_airtemp.dsreg'),
+                                    self._ingest_dataset('ndbc_sos-44014_currents.dsreg'),
+                                    self._ingest_dataset('ndbc_sos-44014_winds.dsreg'),
+                                    self._ingest_dataset('ndbc_sos-44013_sea_water_electrical_conductivity.dsreg'),
+                                    self._ingest_dataset('cgsn_osu-ismt2_eco-dfl.dsreg')])
+        '''
         yield self._ingest_dataset('ndbc_sos-44014_airtemp.dsreg')
         yield self._ingest_dataset('ndbc_sos-44014_currents.dsreg')
         yield self._ingest_dataset('ndbc_sos-44014_winds.dsreg')
         yield self._ingest_dataset('ndbc_sos-44013_sea_water_electrical_conductivity.dsreg')
+        yield self._ingest_dataset('cgsn_osu-ismt2_eco-dfl.dsreg')
+        '''
 
-        #yield dlist 
+        yield dlist
+
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
 
         self._added_count = 0
 
-        print "datasets"#, dlist
+        print "datasets", dlist
 
 
 
