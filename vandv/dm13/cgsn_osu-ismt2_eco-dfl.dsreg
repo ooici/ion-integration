@@ -1,0 +1,23 @@
+# DataSourceResource:9211
+{
+"user_id": "A7B44115-34BC-4553-B51E-1D87617F12E0",
+"source_type": "NETCDF_S",
+"request_type": "DAP",
+"dataset_url": "http://ooi.coas.oregonstate.edu:8080/thredds/dodsC/OOI/ISMT2/ISMT2_ECO-DFL.nc",
+"max_ingest_millis": 60000,
+"ncml_mask": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><netcdf xmlns=\"http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2\" location=\"***lochold***\"><attribute name=\"source\" value=\"Mooring observation\"/></netcdf>",
+"ion_title": "Inshore Mooring Test II: Sea Surface Estimated Chlorophyll Concentration",
+"ion_institution_id": "OOI CGSN",
+"ion_description": "Estimated chlorophyll concentrations measured at 1 meter water depth",
+"update_interval_seconds": 900,
+"is_public": false,
+"initial_starttime_offset_millis": 345600000,
+"starttime_offset_millis": 0,
+"endtime_offset_millis": 0,
+"aggregation_rule": "OVERLAP"
+}
+# ThreddsAuthentication:4504
+{
+"name": "cgsn",
+"password": "ISMT2!!"
+}
