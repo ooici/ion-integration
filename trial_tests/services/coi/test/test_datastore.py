@@ -35,14 +35,14 @@ class CassandraBackedDataStoreTest(import_test_datastore.DataStoreTest):
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
 
-
     services=[]
     services.append(
         {'name':'ds1','module':'ion.services.coi.datastore','class':'DataStoreService',
          'spawnargs':{COMMIT_CACHE:'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
                       BLOB_CACHE:'ion.core.data.cassandra_bootstrap.CassandraStoreBootstrap',
                       PRELOAD_CFG:{ION_DATASETS_CFG:True, ION_AIS_RESOURCES_CFG:True},
-                       }
+                      "username": username,
+                      "password": password }
                 })
 
     services.append(import_test_datastore.DataStoreTest.services[1])
