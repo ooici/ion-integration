@@ -11,7 +11,6 @@ from twisted.internet import defer
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
-from ion.core.process.process import Process
 from ion.integration.ais.notification_alert_service import NotificationAlertServiceClient
 from ion.integration.ais.app_integration_service import AppIntegrationServiceClient
 
@@ -19,7 +18,7 @@ from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
 from telephus.cassandra.ttypes import InvalidRequestException
 
-from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE, PERSISTENT_ARCHIVE
+from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE, NOTIFICATION_ALERT_CACHE, PERSISTENT_ARCHIVE
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS_CFG, ION_AIS_RESOURCES_CFG, PRELOAD_CFG
 
 from ion.integration.ais.test import test_notification_alert as import_test_notification_alert
@@ -44,7 +43,7 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
             
             'spawnargs':{"index_store_class": 'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
                          "keyspace": "sysname",
-                         "column_family": "notification_alert_service"
+                         "column_family":  NOTIFICATION_ALERT_CACHE
                          }
             },
 
