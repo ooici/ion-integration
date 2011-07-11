@@ -43,7 +43,9 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
             
             'spawnargs':{"index_store_class": 'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
                          "keyspace": "sysname",
-                         "column_family":  NOTIFICATION_ALERT_CACHE
+                         "column_family":  NOTIFICATION_ALERT_CACHE,
+                         "cassandra_username": username,
+                         "cassandra_password": password
                          }
             },
 
