@@ -192,7 +192,11 @@ def main():
     if opts.debug and len(itvfileapps) > 0:
         print "Apps to run with all tests (via .itv):", itvfileapps
 
+    # MUST SET THIS ENV VAR before we load tests, otherwise the bootstrap.py will attempt to install a busy loop detection 
+    # mechanism which breaks several things here.
+    os.environ['ION_NO_BUSYLOOP_DETECT'] = '1'
     all_testclasses, all_x = get_test_classes(testfiles, opts.debug)
+    del os.environ['ION_NO_BUSYLOOP_DETECT']
 
     # if we have no tests, yet we have itvfiles, that means we need to imply --debug-cc
     if len(testfiles) == 0 and len(itvfileapps) > 0:
