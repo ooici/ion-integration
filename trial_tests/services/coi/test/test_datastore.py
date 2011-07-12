@@ -26,12 +26,16 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS
 from telephus.cassandra.ttypes import InvalidRequestException
 
 
-from ion.services.coi.test import test_datastore as import_test_datastore
+from ion.services.coi.test.test_datastore import DataStoreTest
+
+from ion.core.object import object_utils
+OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version=1)
 
 
-class CassandraBackedDataStoreTest(import_test_datastore.DataStoreTest):
+class CassandraBackedDataStoreTest(DataStoreTest):
 
 
+    timeout = 60
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
 
@@ -45,7 +49,7 @@ class CassandraBackedDataStoreTest(import_test_datastore.DataStoreTest):
                        }
                 })
 
-    services.append(import_test_datastore.DataStoreTest.services[1])
+    services.append(DataStoreTest.services[1])
 
 
     @defer.inlineCallbacks
@@ -73,7 +77,7 @@ class CassandraBackedDataStoreTest(import_test_datastore.DataStoreTest):
         yield test_harness.run_cassandra_config()
 
 
-        yield import_test_datastore.DataStoreTest.setup_services(self)
+        yield DataStoreTest.setup_services(self)
 
 
     @defer.inlineCallbacks
@@ -87,8 +91,63 @@ class CassandraBackedDataStoreTest(import_test_datastore.DataStoreTest):
 
         self.test_harness.disconnect()
 
-        yield import_test_datastore.DataStoreTest.tearDown(self)
+        yield DataStoreTest.tearDown(self)
 
 
     # This test does not work with the cassandra backend by design!
-    del import_test_datastore.DataStoreTest.test_put_blobs
+    del DataStoreTest.test_put_blobs
+
+
+    @defer.inlineCallbacks
+    def test_large_objects(self):
+
+        n = 1000000
+
+        rand = open('/dev/random','r')
+
+
+        @defer.inlineCallbacks
+        def create_large_object():
+            repo = yield self.wb1.workbench.create_repository(OPAQUE_ARRAY_TYPE)
+
+            repo.root_object.value.extend(rand.readlines(n))
+
+            repo.commit('Commit before send...')
+
+            log.info('Repoisitory size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
+
+            defer.returnValue(repo)
+
+        for i in range(200):
+            repo = yield create_large_object()
+
+            result = yield self.wb1.workbench.push('datastore',repo)
+
+            self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
+
+            log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
+            log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
+
+
+            self.wb1.workbench.clear_repository(repo)
+
+
+        rand.close()
+
+
+
+    @defer.inlineCallbacks
+    def test_checkout_a_lot(self):
+
+
+        for i in range(10):
+            yield self.test_checkout_defaults()
+            self.wb1.workbench.manage_workbench_cache('Test runner context!')
+
+            for key, repo in self.wb1.workbench._repo_cache.iteritems():
+                log.info('Repo Name - %s, size - %d, # of blobs - %d' % (key, repo.__sizeof__(), len(repo.index_hash)))
+
+            log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
+            log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
+
+
