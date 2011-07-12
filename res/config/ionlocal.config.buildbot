@@ -50,13 +50,18 @@
 },
 
 
-
 'ion.services.dm.preservation.cassandra_manager_agent':{
          'host': 'cassandra-dev01',
          'port': 9160,
          'cassandra_username':None,
          'cassandra_password':None 
         },
+
+'ion.core.data.storage_configuration_utility':{
+    'cassandra_username':None,
+    'cassandra_password':None,
+    'storage provider':{'host':'cassandra-dev01','port':9160}
+ },
 
 
 'trial_tests.services.coi.test.test_datastore':{
