@@ -9,7 +9,7 @@
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
@@ -96,6 +96,44 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
     # This test does not work with the cassandra backend by design!
     del DataStoreTest.test_put_blobs
+
+
+    def commit_it(self, i):
+        #log.debug('Calling commit_it: %d' % i)
+        self.repo.root_object.owner.name = 'my name %d' % i
+        self.repo.root_object.person[0].name = 'other name %d' % i
+
+        self.repo.commit('Commit number %d' % i)
+
+
+    @defer.inlineCallbacks
+    def test_push_make_busy(self):
+
+        repo = self.wb1.workbench.get_repository(self.repo_key)
+
+        self.repo = repo
+
+
+        for i in range(1000):
+            d = defer.Deferred()
+            d.addCallback(self.commit_it)
+            #print d.callbacks
+            res = reactor.callLater(0, d.callback,i)
+
+            #print dir(res)
+
+            yield d
+
+
+        log.info('DataStore1 Push Complex addressbook to DataStore1. Number of objects %d' % len(repo.index_hash))
+
+        result = yield self.wb1.workbench.push_by_name('datastore',self.repo_key)
+
+        self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
+
+        log.info('DataStore1 Push Complex addressbook to DataStore1: complete')
+
+
 
 
     @defer.inlineCallbacks
