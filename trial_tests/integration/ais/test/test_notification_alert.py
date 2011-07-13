@@ -18,7 +18,7 @@ from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
 from telephus.cassandra.ttypes import InvalidRequestException
 
-from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE, NOTIFICATION_ALERT_CACHE, PERSISTENT_ARCHIVE
+from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE,  PERSISTENT_ARCHIVE
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS_CFG, ION_AIS_RESOURCES_CFG, PRELOAD_CFG
 
 from ion.integration.ais.test import test_notification_alert as import_test_notification_alert
@@ -27,6 +27,7 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
     
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
+    
     
     cass_services = [
                 
@@ -37,13 +38,16 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
                       "username": username,
                       "password": password }
         },  
+        #I've hard coded the column family name below. 
+        #It's possible to get the name out of the storage_conf, but I have to know the name of the column 
+        #family in order to get the name of the column family. 
         {'name':'notification_alert',
          'module':'ion.integration.ais.notification_alert_service',
          'class':'NotificationAlertService',
             
             'spawnargs':{"index_store_class": 'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
                          "keyspace": "sysname",
-                         "column_family":  NOTIFICATION_ALERT_CACHE,
+                         "column_family":  "notification_alert_service",
                          "cassandra_username": username,
                          "cassandra_password": password
                          }
