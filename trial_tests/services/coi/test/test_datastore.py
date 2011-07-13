@@ -6,6 +6,8 @@
 @author David Foster
 @author Matt Rodriguez
 """
+import os 
+import subprocess
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
@@ -35,7 +37,7 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 class CassandraBackedDataStoreTest(DataStoreTest):
 
 
-    timeout = 60
+    timeout = 300
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
 
@@ -105,20 +107,38 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         rand = open('/dev/random','r')
 
-
+        def _print_memory_usage():
+            """
+            @brief Prints the memory usage of the container processes.
+        
+             Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
+             twistd container processes.
+            """
+        
+            
+            log.info("Started the containers")
+            ps_args = ["-o args,command,rss,vsize",  "-p", str(os.getpid())]
+            #I'd rather not execute this through the shell, but the output from the command was truncated
+            #when I did not set shell=True.
+            p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
+            std_output = p.communicate()[0]
+            #This should probably become a logging statement.
+            print std_output
+        
+        
         @defer.inlineCallbacks
         def create_large_object():
             repo = yield self.wb1.workbench.create_repository(OPAQUE_ARRAY_TYPE)
-
-            repo.root_object.value.extend(rand.readlines(n))
+            MB = 1024 * 124
+            repo.root_object.value.extend(rand.read(2 *MB))
 
             repo.commit('Commit before send...')
 
-            log.info('Repoisitory size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
+            log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
 
             defer.returnValue(repo)
 
-        for i in range(200):
+        for i in range(1000):
             repo = yield create_large_object()
 
             result = yield self.wb1.workbench.push('datastore',repo)
@@ -128,10 +148,11 @@ class CassandraBackedDataStoreTest(DataStoreTest):
             log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
             log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
 
-
+            _print_memory_usage()
             self.wb1.workbench.clear_repository(repo)
 
-
+        
+         
         rand.close()
 
 
