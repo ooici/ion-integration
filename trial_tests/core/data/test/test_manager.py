@@ -16,7 +16,6 @@ from ion.core.data import storage_configuration_utility
 from ion.core.object import workbench
 
 from ion.core.data import store
-
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
@@ -119,6 +118,10 @@ class CassandraDataManagerTest(IDataManagerTest):
         cas_host = cassandra_cluster.hosts.add()
         
         #host = CONF.getValue("host", None)
+        import pdb
+        pdb.set_trace()
+        storage_conf = storage_configuration_utility.get_cassandra_configuration()
+
         host = storage_configuration_utility.storage_provider["host"]
         port = storage_configuration_utility.storage_provider["port"]
         cas_host.host = host
