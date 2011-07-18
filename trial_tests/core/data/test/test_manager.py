@@ -8,16 +8,19 @@
  by skipping the setUp or a method inside it!
 
 """
-from twisted.trial import unittest
+
 from twisted.internet import defer
 
+
 from ion.core.data.cassandra import CassandraDataManager, CassandraStorageResource
-from ion.core.data import storage_configuration_utility
 from ion.core.object import workbench
 
 from ion.core.data import store
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
+
+
+from ion.test.iontest import IonTestCase
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
@@ -38,7 +41,7 @@ cassandra_keypsace_type = object_utils.create_type_identifier(object_id=2506, ve
 
 
 
-class IDataManagerTest(unittest.TestCase):
+class IDataManagerTest(IonTestCase):
     
     @defer.inlineCallbacks
     def setUp(self):
@@ -116,23 +119,21 @@ class CassandraDataManagerTest(IDataManagerTest):
         
         # Set only one host and port in the host list for now
         cas_host = cassandra_cluster.hosts.add()
+        host = CONF.getValue("host", "localhost")
+        port = CONF.getValue("port", 9160)
+        username = CONF.getValue("cassandra_username", None)
+        password = CONF.getValue("cassandra_password", None)
         
-        #host = CONF.getValue("host", None)
-        import pdb
-        pdb.set_trace()
-        storage_conf = storage_configuration_utility.get_cassandra_configuration()
-
-        host = storage_configuration_utility.storage_provider["host"]
-        port = storage_configuration_utility.storage_provider["port"]
         cas_host.host = host
         cas_host.port = port
+        log.info("Connecting to host %s  port %s " % (host,port))
         
         ### Create a Credentials resource - for cassandra a SimplePassword object
         cache_repository, simple_password  = self.wb.init_repository(simple_password_type)
         #We'll have to figure out how to pass the username and password in as part of the
         #nightly build
-        simple_password.username = 'ooiuser'
-        simple_password.password = 'oceans11'
+        simple_password.username = username
+        simple_password.password = password
         
         storage_resource = CassandraStorageResource(cassandra_cluster, credentials=simple_password)
         manager = CassandraDataManager(storage_resource)  
