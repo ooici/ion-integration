@@ -107,7 +107,8 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         self.repo.commit('Commit number %d' % i)
 
-
+    """
+    These tests need to be moved into the itv_tests directory
     @defer.inlineCallbacks
     def test_push_make_busy(self):
 
@@ -146,12 +147,12 @@ class CassandraBackedDataStoreTest(DataStoreTest):
         rand = open('/dev/random','r')
 
         def _print_memory_usage():
-            """
+            
             @brief Prints the memory usage of the container processes.
         
              Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
              twistd container processes.
-            """
+            
         
             
             log.info("Started the containers")
@@ -209,4 +210,4 @@ class CassandraBackedDataStoreTest(DataStoreTest):
             log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
             log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
 
-
+    """
