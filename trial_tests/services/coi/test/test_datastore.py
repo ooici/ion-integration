@@ -117,7 +117,7 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         self.repo = repo
 
-        """
+        '''
         Fancy code - not necessary
         for i in range(1000):
             d = defer.Deferred()
@@ -128,7 +128,7 @@ class CassandraBackedDataStoreTest(DataStoreTest):
             #print dir(res)
 
             yield d
-            """
+            '''
 
         for i in range(1000):
             #log.debug('Calling commit_it: %d' % i)
