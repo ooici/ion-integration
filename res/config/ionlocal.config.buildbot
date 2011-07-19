@@ -2,6 +2,56 @@
 
 {
 
+'ion.core.data.storage_configuration_utility':{
+'storage provider':{'host':'cassandra-dev01','port':9160},
+'persistent archive':{'cf_defs':
+ [{'comment': None, 'default_validation_class': 'org.apache.cassandra.db.marshal.BytesType', 
+  'comparator_type': 'org.apache.cassandra.db.marshal.BytesType',
+  'name': 'notification_alert_service', 'column_type': 'Standard', 'subcomparator_type': None, 
+   'column_metadata': [{'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'user_ooi_id'}, 
+   					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'data_src_id'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'subscription_type'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'email_alerts_filter'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'dispatcher_alerts_filter'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'dispatcher_script_path'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'date_registered'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'title'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'institution'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'source'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'references'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'conventions'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'summary'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'comment'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_time_coverage_start'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_time_coverage_end'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_lat_min'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_lat_max'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_lon_min'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_lon_max'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_vertical_min'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_vertical_max'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'ion_geospatial_vertical_positive'}, 
+					   {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'download_url'}
+					  ], 
+	},
+	{'comment': None, 'default_validation_class': 'org.apache.cassandra.db.marshal.BytesType', 
+  	'comparator_type': 'org.apache.cassandra.db.marshal.BytesType',
+  	'name': 'scheduler', 'column_type': 'Standard', 'subcomparator_type': None, 
+    'column_metadata': [{'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'task_id'}, 
+   					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'desired_origin'}, 
+					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'interval_seconds'}, 
+					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'payload'}, 
+					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'user_id'}, 
+					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'constant'}, 
+					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'start_time'}, 
+					    {'index_type': 0, 'index_name': None, 'validation_class': 'org.apache.cassandra.db.marshal.BytesType', 'name': 'end_time'}, 
+					   ], 
+					 }				 
+	]
+ 	}
+ },
+
+
 'ion.services.coi.datastore_bootstrap.ion_preload_config':{
     # Path to files relative to ioncore-python directory!
     'sample_traj_dataset' : './ion_data/SOS_Test.ooicdm.tgz',
@@ -46,7 +96,12 @@
 
 'ion.services.coi.datastore':{
     'preload': {'ion_datasets':True},
-    'sysname': 'sysname_dev'
+},
+
+'trial_tests.core.data.test.test_manager':{
+	'host':'cassandra-dev01',
+	'cassandra_username':None,
+    'cassandra_password':None
 },
 
 
@@ -57,22 +112,25 @@
          'cassandra_password':None 
         },
 
-'ion.core.data.storage_configuration_utility':{
-    'cassandra_username':None,
-    'cassandra_password':None,
-    'storage provider':{'host':'cassandra-dev01','port':9160}
- },
-
+'trial_tests.integration.ais.test.test_notification_alert':{
+ 	'cassandra_username':None,
+    'cassandra_password':None 
+},
 
 'trial_tests.services.coi.test.test_datastore':{
     'cassandra_username':None,
     'cassandra_password':None, 
  },
 
+'trial_tests.services.dm.scheduler.test.test_scheduler':{
+	'cassandra_username':None,
+    'cassandra_password':None,
+    'storage provider':{'host':'cassandra-dev01','port':9160}
+},
+
 'trial_tests.services.dm.inventory.test.test_association_service':{
     'cassandra_username':None,
     'cassandra_password':None,
-    'sysname': 'sysname_dev',
     'storage provider':{'host':'cassandra-dev01','port':9160}
  },
 
@@ -105,10 +163,6 @@
     'error_if_existing':False,
 },
 
-'ion.core.data.storage_configuration_utility':{
-    'storage provider':{'host':'cassandra-dev01','port':9160},
-    'persistent archive':{}
-},
 
 
 'ion.core.data.cassandra_teardown_script':{

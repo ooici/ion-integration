@@ -27,7 +27,8 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
     
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
-    
+    #These tests exercise many parts of the ION framework, so it's very easy for them to timeout
+    timeout = 60
     
     cass_services = [
                 
@@ -46,7 +47,6 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
          'class':'NotificationAlertService',
             
             'spawnargs':{"index_store_class": 'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
-                         "keyspace": "sysname",
                          "column_family":  "notification_alert_service",
                          "cassandra_username": username,
                          "cassandra_password": password
@@ -63,7 +63,6 @@ class CassandraBackedNotificationAlertTest(import_test_notification_alert.Notifi
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
-        print self.services
         
         storage_conf = storage_configuration_utility.get_cassandra_configuration()
 
