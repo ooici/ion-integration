@@ -30,9 +30,10 @@ from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
 
+from telephus.cassandra.ttypes import IndexType
 
 from ion.core.data.cassandra_bootstrap import CassandraStoreBootstrap, CassandraIndexedStoreBootstrap, CassandraSchemaProvider
-from ion.core.data.cassandra_bootstrap import STORAGE_PROVIDER, PERSISTENT_ARCHIVE, IndexType
+from ion.core.data.cassandra_bootstrap import STORAGE_PROVIDER, PERSISTENT_ARCHIVE
 
 
 simple_password_type = object_utils.create_type_identifier(object_id=2502, version=1)
