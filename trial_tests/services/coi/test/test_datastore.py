@@ -16,6 +16,7 @@ from twisted.internet import defer, reactor
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
+from ion.util import procutils as pu
 
 from ion.core.data import cassandra_bootstrap
 from ion.core.data import storage_configuration_utility
@@ -116,7 +117,8 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         self.repo = repo
 
-
+        '''
+        Fancy code - not necessary
         for i in range(1000):
             d = defer.Deferred()
             d.addCallback(self.commit_it)
@@ -126,7 +128,17 @@ class CassandraBackedDataStoreTest(DataStoreTest):
             #print dir(res)
 
             yield d
+            '''
 
+        for i in range(1000):
+            #log.debug('Calling commit_it: %d' % i)
+            self.repo.root_object.owner.name = 'my name %d' % i
+            self.repo.root_object.person[0].name = 'other name %d' % i
+
+            self.repo.commit('Commit number %d' % i)
+            yield pu.asleep(0)
+
+            
 
         log.info('DataStore1 Push Complex addressbook to DataStore1. Number of objects %d' % len(repo.index_hash))
 
