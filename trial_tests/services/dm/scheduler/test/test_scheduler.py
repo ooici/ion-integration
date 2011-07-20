@@ -9,11 +9,11 @@
 
 from twisted.internet import defer
 
-from ion.core.data.cassandra_bootstrap import CassandraSchemaProvider, IndexType
+from ion.core.data.cassandra_bootstrap import CassandraSchemaProvider
 from ion.core.object import object_utils
 from ion.services.dm.scheduler.scheduler_service import SchedulerService
 from ion.core.data import storage_configuration_utility
-from ion.core.data.storage_configuration_utility import STORAGE_PROVIDER, PERSISTENT_ARCHIVE
+
 
 import ion.util.ionlog
 
