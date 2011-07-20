@@ -9,9 +9,10 @@
 import os 
 import subprocess
 
+
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
-from twisted.internet import defer, reactor
+from twisted.internet import defer
 
 from ion.core import ioninit
 CONF = ioninit.config(__name__)
@@ -38,7 +39,7 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 class CassandraBackedDataStoreTest(DataStoreTest):
 
 
-    timeout = 300
+    timeout = 600
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
 
@@ -108,8 +109,6 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         self.repo.commit('Commit number %d' % i)
 
-    """
-    These tests need to be moved into the itv_tests directory
     @defer.inlineCallbacks
     def test_push_make_busy(self):
 
@@ -149,33 +148,35 @@ class CassandraBackedDataStoreTest(DataStoreTest):
         log.info('DataStore1 Push Complex addressbook to DataStore1: complete')
 
 
-
+    
+    def _print_memory_usage(self):
+        """
+        @brief Prints the memory usage of the container processes.
+    
+         Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
+         twistd container processes.
+        """
+    
+        
+        log.info("Started the containers")
+        ps_args = ["-o args,command,rss,vsize",  "-p", str(os.getpid())]
+        #I'd rather not execute this through the shell, but the output from the command was truncated
+        #when I did not set shell=True.
+        try:
+            p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
+            std_output = p.communicate()[0]
+            print std_output
+            line2 = std_output.split(os.linesep)[1]
+            rss = line2.split()[3]
+            log.info("RSS: %s" % (rss,))
+        except OSError, ex:
+            log.info("subprocess.Popen raised an OSError")
+            log.info(ex.args)
 
     @defer.inlineCallbacks
     def test_large_objects(self):
 
-        n = 1000000
-
         rand = open('/dev/random','r')
-
-        def _print_memory_usage():
-            
-            @brief Prints the memory usage of the container processes.
-        
-             Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
-             twistd container processes.
-            
-        
-            
-            log.info("Started the containers")
-            ps_args = ["-o args,command,rss,vsize",  "-p", str(os.getpid())]
-            #I'd rather not execute this through the shell, but the output from the command was truncated
-            #when I did not set shell=True.
-            p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
-            std_output = p.communicate()[0]
-            #This should probably become a logging statement.
-            print std_output
-        
         
         @defer.inlineCallbacks
         def create_large_object():
@@ -189,7 +190,7 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
             defer.returnValue(repo)
 
-        for i in range(1000):
+        for i in range(300):
             repo = yield create_large_object()
 
             result = yield self.wb1.workbench.push('datastore',repo)
@@ -199,7 +200,7 @@ class CassandraBackedDataStoreTest(DataStoreTest):
             log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
             log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
 
-            _print_memory_usage()
+            self._print_memory_usage()
             self.wb1.workbench.clear_repository(repo)
 
         
@@ -211,8 +212,8 @@ class CassandraBackedDataStoreTest(DataStoreTest):
     @defer.inlineCallbacks
     def test_checkout_a_lot(self):
 
-
-        for i in range(10):
+        
+        for i in range(30):
             yield self.test_checkout_defaults()
             self.wb1.workbench.manage_workbench_cache('Test runner context!')
 
@@ -221,5 +222,5 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
             log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
             log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
-
-    """
+            self._print_memory_usage()
+            
