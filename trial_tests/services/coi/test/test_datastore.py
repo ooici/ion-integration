@@ -156,14 +156,14 @@ class CassandraBackedDataStoreTest(DataStoreTest):
          Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
          twistd container processes.
         """
-    
-        
-        log.info("Started the containers")
+
         ps_args = ["-o args,command,rss,vsize",  "-p", str(os.getpid())]
         #I'd rather not execute this through the shell, but the output from the command was truncated
         #when I did not set shell=True.
         try:
-            p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
+            #p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
+            command = "ps -o args,command,rss,vsize -p " + str(os.getpid())
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
             std_output = p.communicate()[0]
             print std_output
             line2 = std_output.split(os.linesep)[1]
