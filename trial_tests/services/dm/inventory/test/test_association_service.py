@@ -20,7 +20,8 @@ from ion.core.object import object_utils
 
 from ion.core.data import storage_configuration_utility
 from ion.core.data.cassandra_bootstrap import PERSISTENT_ARCHIVE, CassandraSchemaProvider
-from ion.core.data.cassandra_bootstrap import InvalidRequestException
+
+from telephus.cassandra.ttypes import InvalidRequestException
 
 
 from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE
