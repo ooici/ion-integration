@@ -196,17 +196,15 @@ def main():
     # MUST SET THIS ENV VAR before we load tests, otherwise the bootstrap.py will attempt to install a busy loop detection 
     # mechanism which breaks several things here.
 
+    # only set the env if it is not already set
     no_busy_env = os.environ.get('ION_NO_BUSYLOOP_DETECT',None)
-    os.environ['ION_NO_BUSYLOOP_DETECT'] = '1'
+    if no_busy_env is None:
+        os.environ['ION_NO_BUSYLOOP_DETECT'] = '1'
+
     all_testclasses, all_x = get_test_classes(testfiles, opts.debug)
 
-    if not opts.no_busy:
+    if opts.no_busy is False and no_busy_env is None:
         del os.environ['ION_NO_BUSYLOOP_DETECT']
-
-    if no_busy_env is not None:
-        stars ='*****************************************'
-        print """\n%s\n Over riding environment variable 'ION_NO_BUSYLOOP_DETECT' with bin/itv command line argument --no-busy\n%s\n""" % (stars,stars)
-
 
     # if we have no tests, yet we have itvfiles, that means we need to imply --debug-cc
     if len(testfiles) == 0 and len(itvfileapps) > 0:
