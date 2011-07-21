@@ -95,7 +95,8 @@ def get_opts():
     p.add_option("--debug-cc",        action="store_true",dest="debug_cc", help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
     p.add_option("--wrap-twisted-bin",action="store",     dest="wrapbin",  help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
     p.add_option("--trial-args",      action="store",     dest="trialargs",help="Arguments passed in to trial, i.e. -u or --coverage")
-    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False, trialargs=None )  # make up a new random sysname
+    p.add_option("--no-busy",         action="store_true",dest="no_busy", help="Set the ION_NO_BUSYLOOP_DETECT env variable so that busy loop detection does not run.")
+    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False, trialargs=None, no_busy=False )  # make up a new random sysname
     return p.parse_args()
 
 def get_test_classes(testargs, debug=False):
@@ -194,9 +195,16 @@ def main():
 
     # MUST SET THIS ENV VAR before we load tests, otherwise the bootstrap.py will attempt to install a busy loop detection 
     # mechanism which breaks several things here.
-    os.environ['ION_NO_BUSYLOOP_DETECT'] = '1'
+
+    # only set the env if it is not already set
+    no_busy_env = os.environ.get('ION_NO_BUSYLOOP_DETECT',None)
+    if no_busy_env is None:
+        os.environ['ION_NO_BUSYLOOP_DETECT'] = '1'
+
     all_testclasses, all_x = get_test_classes(testfiles, opts.debug)
-    del os.environ['ION_NO_BUSYLOOP_DETECT']
+
+    if opts.no_busy is False and no_busy_env is None:
+        del os.environ['ION_NO_BUSYLOOP_DETECT']
 
     # if we have no tests, yet we have itvfiles, that means we need to imply --debug-cc
     if len(testfiles) == 0 and len(itvfileapps) > 0:
