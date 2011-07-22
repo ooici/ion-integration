@@ -30,7 +30,8 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS
 from telephus.cassandra.ttypes import InvalidRequestException
 
 
-from ion.services.coi.test.test_datastore import DataStoreTest, create_large_object
+from ion.services.coi.test import test_datastore as datastore_test
+create_large_object = datastore_test.create_large_object
 
 import binascii
 from ion.core.object import object_utils
@@ -38,10 +39,12 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 
 
 
-class CassandraBackedDataStoreTest(DataStoreTest):
+
+# This is a bit of a hack - to keep it from running the tests on the original DataStoreTest class as well.
+class CassandraBackedDataStoreTest(datastore_test.DataStoreTest):
 
 
-    repetitions = 200
+    repetitions = 100
 
     timeout = 600
     username = CONF.getValue('cassandra_username', None)
@@ -57,8 +60,10 @@ class CassandraBackedDataStoreTest(DataStoreTest):
                       "password": password }
                 })
 
-    services.append(DataStoreTest.services[1])
+    services.append(datastore_test.DataStoreTest.services[1])
 
+    # This test does not work with the cassandra backend by design!
+    del datastore_test.DataStoreTest.test_put_blobs
 
     @defer.inlineCallbacks
     def setUp(self):
@@ -85,7 +90,7 @@ class CassandraBackedDataStoreTest(DataStoreTest):
         yield test_harness.run_cassandra_config()
 
 
-        yield DataStoreTest.setup_services(self)
+        yield datastore_test.DataStoreTest.setup_services(self)
 
 
     @defer.inlineCallbacks
@@ -99,11 +104,10 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         self.test_harness.disconnect()
 
-        yield DataStoreTest.tearDown(self)
+        yield datastore_test.DataStoreTest.tearDown(self)
 
 
-    # This test does not work with the cassandra backend by design!
-    del DataStoreTest.test_put_blobs
+
 
 
     def commit_it(self, i):
