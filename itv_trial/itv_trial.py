@@ -93,10 +93,11 @@ def get_opts():
     p.add_option("--no-pause",        action="store_true",dest="nopause",  help="Do not pause after finding all tests and deps to run.")
     p.add_option("--debug",           action="store_true",dest="debug",    help="Prints verbose debugging messages.")
     p.add_option("--debug-cc",        action="store_true",dest="debug_cc", help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
+    p.add_option("--launcher",        action="store_true",dest="launcher", help="If specified, runs all dependent containers but does not run a trial test or a CC shell.")
     p.add_option("--wrap-twisted-bin",action="store",     dest="wrapbin",  help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
     p.add_option("--trial-args",      action="store",     dest="trialargs",help="Arguments passed in to trial, i.e. -u or --coverage")
     p.add_option("--no-busy",         action="store_true",dest="no_busy", help="Set the ION_NO_BUSYLOOP_DETECT env variable so that busy loop detection does not run.")
-    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False, trialargs=None, no_busy=False )  # make up a new random sysname
+    p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False, trialargs=None, no_busy=False, launcher=False)  # make up a new random sysname
     return p.parse_args()
 
 def get_test_classes(testargs, debug=False):
@@ -206,10 +207,14 @@ def main():
     if opts.no_busy is False and no_busy_env is None:
         del os.environ['ION_NO_BUSYLOOP_DETECT']
 
-    # if we have no tests, yet we have itvfiles, that means we need to imply --debug-cc
+
+    # if we have no tests, yet we have itvfiles, that means we need to imply --launcher (if --debug-cc not specified)
     if len(testfiles) == 0 and len(itvfileapps) > 0:
-        print "ITV files only specified, no tests: implying --debug-cc"
-        opts.debug_cc = True
+        if opts.debug_cc:
+            print "ITV files only specified, no tests: Debug CC specified"
+        else:
+            print "ITV files only specified, no tests: implying --launcher"
+            opts.launcher = True
 
         # we also need to fake that we have a test so the logic below runs
         all_testclasses = [object]
@@ -398,7 +403,31 @@ def main():
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
  
-            if not opts.debug_cc:
+            if opts.launcher:
+                # do nothing, spinwait for CTRL-C
+                print >> sys.stderr, "LAUNCHER MODE, WAITING FOR TERMINATION"
+                try:
+                    while True:
+                        time.sleep(5)
+                except KeyboardInterrupt:
+                    pass
+
+                sys.exit(0)
+            elif opts.debug_cc:
+                # spawn an interactive twistd shell into this system
+                print >> sys.stderr, "DEBUG_CC:"
+
+                uniqueid = uuid4()
+                basepath = os.path.join(tempfile.gettempdir(), 'cc-%s' % (str(uniqueid)))
+                pidfile = '%s-debug-cc.pid' % (basepath)
+                logfile = '%s-debug-cc.log' % (basepath)
+
+                sargs = build_twistd_args("", "", pidfile, logfile, None, opts, True)
+                os.execve("bin/twistd", sargs, newenv)
+
+            else:
+
+                # RUN TRIAL TEST
 
                 # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
                 if len(all_x) == 1:
@@ -413,17 +442,6 @@ def main():
                     trialargs.insert(0, targs)  
                 
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
-            else:
-                # spawn an interactive twistd shell into this system
-                print >> sys.stderr, "DEBUG_CC:"
-
-                uniqueid = uuid4()
-                basepath = os.path.join(tempfile.gettempdir(), 'cc-%s' % (str(uniqueid)))
-                pidfile = '%s-debug-cc.pid' % (basepath)
-                logfile = '%s-debug-cc.log' % (basepath)
-
-                sargs = build_twistd_args("", "", pidfile, logfile, None, opts, True)
-                os.execve("bin/twistd", sargs, newenv)
 
         def cleanup():
             print "Cleaning up app_dependencies..."
