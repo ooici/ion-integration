@@ -27,6 +27,9 @@ from ion.core.data.storage_configuration_utility import BLOB_CACHE, COMMIT_CACHE
 from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS_CFG, ION_AIS_RESOURCES_CFG, PRELOAD_CFG
 
 
+from ion.services.coi.test import test_datastore as datastore_test
+create_large_object = datastore_test.create_large_object
+
 from telephus.cassandra.ttypes import InvalidRequestException
 
 
@@ -36,7 +39,7 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 
 class WorkBenchTest(ItvTestCase):
 
-
+    repetitions = 20
     timeout = 600
     app_dependencies = [
                 ("res/apps/workbench.app", "id=1"),
@@ -50,14 +53,6 @@ class WorkBenchTest(ItvTestCase):
 
         self.proc.op_fetch_blobs = self.proc.workbench.op_fetch_blobs
 
-        repo = yield self.create_large_object()
-
-        result = yield self.proc.workbench.push('workbench',repo)
-
-        self.repo_key = repo.repository_key
-
-        print 'HEKJENWKNWKNWK'
-        log.critical('SKNDSKNSLDNSKLSNSLKN')
 
 
     @defer.inlineCallbacks
@@ -66,48 +61,41 @@ class WorkBenchTest(ItvTestCase):
 
 
     @defer.inlineCallbacks
-    def create_large_object(self):
-
-        rand = open('/dev/random','r')
-
-        repo = yield self.proc.workbench.create_repository(OPAQUE_ARRAY_TYPE)
-        MB = 1024 * 124
-        repo.root_object.value.extend(rand.read(2 *MB))
-
-        repo.commit('Commit before send...')
-
-        log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
-
-        rand.close()
-
-
-        defer.returnValue(repo)
-
-    @defer.inlineCallbacks
     def test_large_objects(self):
 
 
-        for i in range(300):
-            repo = yield self.create_large_object()
+        for i in range(self.repetitions):
+            repo = yield create_large_object(self.proc.workbench)
 
             result = yield self.proc.workbench.push('workbench',repo)
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
-            self._print_memory_usage()
-            self.proc.workbench.clear_repository(repo)
 
+            self.proc.workbench.manage_workbench_cache('Test runner context!')
+            log.info('Memory use is expected to grow in one process only - the workbench app does not have persistent backend')
+            mem = yield pu.print_memory_usage()
+            log.info(mem)
+            log.info("Local Workbench: %s" % self.proc.workbench_memory())
 
 
     @defer.inlineCallbacks
     def test_pull_object(self):
 
-        for i in range(300):
+
+        repo = yield create_large_object(self.proc.workbench)
+
+        result = yield self.proc.workbench.push('workbench',repo)
+
+        self.repo_key = repo.repository_key
+
+        for i in range(self.repetitions):
 
             result = yield self.proc.workbench.pull('workbench',self.repo_key)
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
-            self._print_memory_usage()
             self.proc.workbench.manage_workbench_cache('Test runner context!')
+            mem = yield pu.print_memory_usage()
+            log.info(mem)
             print self.proc.workbench_memory()
