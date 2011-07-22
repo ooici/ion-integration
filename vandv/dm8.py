@@ -4,9 +4,14 @@ from twisted.internet import defer
 from ion.vandv.vandvbase import VVBase
 import os, os.path, time
 
+from ion.core.process.process import Process
 from ion.interact.int_observer import InteractionObserver
+from ion.interact.mscweb import MSCWebProcess
 from ion.util.os_process import OSProcess
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
+
+import ion.util.ionlog
+log = ion.util.ionlog.getLogger(__name__)
 
 class VVDM8(VVBase):
     """
@@ -19,6 +24,9 @@ class VVDM8(VVBase):
     @defer.inlineCallbacks
     def setup(self):
 
+        print "HI I AM IN SETUP"
+        log.critical("HI I AM SETTING UP")
+
         # start full system
         yield self._start_itv(files=["itv_start_files/boot_level_4_local.itv",
                                      "itv_start_files/boot_level_5.itv",
@@ -28,26 +36,34 @@ class VVDM8(VVBase):
                                      "itv_start_files/boot_level_9.itv",
                                      "itv_start_files/4x_boot_level_10.itv"])
 
+        print "YEA DIDE IT"
+        log.critical("I DONE PASSED SETIN UP")
         # message observer - spawning here means we don't have to listen to startup stuff
         self._mo = InteractionObserver()
         yield self._mo.spawn()
 
+        self._proc = Process(spawnargs={'proc-name':'vvdm8_proc'})
+        yield self._proc.spawn()
+
         # supplement added subscriber - we yield on updates here
         self._def_sup_added = defer.Deferred()  # gets called back every time we get one, we must manually reset
 
-        self._sub = DatasetSupplementAddedEventSubscriber(process=self._mo)
+        self._sub = DatasetSupplementAddedEventSubscriber(process=self._proc)
         self._sub.ondata = lambda msg: self._def_sup_added.callback(msg)
 
-        yield self._mo.register_life_cycle_object(self._sub)
+        yield self._proc.register_life_cycle_object(self._sub)
 
         # subscriber so we can just see something is happening
-        self._ingest_sub = IngestionProcessingEventSubscriber(process=self._mo)
+        self._ingest_sub = IngestionProcessingEventSubscriber(process=self._proc)
         def _print_ingest(dat):
             print "INGEST PROCESSING:", dat['content'].additional_data.processing_step
 
         self._ingest_sub.ondata = _print_ingest
 
-        yield self._mo.register_life_cycle_object(self._ingest_sub)
+        yield self._proc.register_life_cycle_object(self._ingest_sub)
+
+        self._mscweb = MSCWebProcess()
+        yield self._mscweb.spawn()
 
     @defer.inlineCallbacks
     def _ingest_dataset(self):
@@ -108,7 +124,11 @@ class VVDM8(VVBase):
         """
         4. Show an MSC of what just happened
         """
+        # open a browser
+        openosp = OSProcess(binary="/usr/bin/open", spawnargs=["http://localhost:9999"])
+        yield openosp.spawn()
 
+        '''
         rawfile = '/tmp/msc-dm8-%s.txt' % time.time()
         f = open(rawfile, 'w')
         f.write(self._mo.writeout_msc())
@@ -128,5 +148,6 @@ class VVDM8(VVBase):
         # open it in a browser
         openosp = OSProcess(binary="/usr/bin/open", spawnargs=[htmlfile])
         yield openosp.spawn()
+        '''
 
 
