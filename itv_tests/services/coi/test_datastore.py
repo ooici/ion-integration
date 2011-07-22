@@ -96,7 +96,7 @@ class CassandraBackedDataStoreTest(ItvTestCase):
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
-            self._print_memory_usage()
+            print pu.print_memory_usage()
             self.proc.workbench.clear_repository(repo)
 
 
@@ -110,6 +110,6 @@ class CassandraBackedDataStoreTest(ItvTestCase):
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
-            self._print_memory_usage()
+            print pu.print_memory_usage()
             self.proc.workbench.manage_workbench_cache('Test runner context!')
             print self.proc.workbench_memory()
