@@ -432,15 +432,14 @@ def main():
                 # SPECIAL BEHAVIOR FOR SINGLE TEST SPECIFIED
                 if len(all_x) == 1:
                     trialargs = args
-                
                 else:
                     trialargs = ["%s.%s" % (x.__module__, x.__name__) for x in testclass]
-                
+
                 #Pass in args to trial
                 targs = opts.trialargs
                 if targs is not None:
-                    trialargs.insert(0, targs)  
-                
+                    trialargs = targs.split(" ") + trialargs    # insert args to trial, split on spaces so it recognizes multiples.
+
                 os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
 
         def cleanup():
