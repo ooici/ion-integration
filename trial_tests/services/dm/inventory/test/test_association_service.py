@@ -39,6 +39,7 @@ LCS_REFERENCE_TYPE = object_utils.create_type_identifier(object_id=26, version=1
 
 class CassandraBackedAssociationServiceTest(AssociationServiceTest):
 
+    timeout = 40 
     username = CONF.getValue('cassandra_username', None)
     password = CONF.getValue('cassandra_password', None)
 
