@@ -14,6 +14,8 @@ from ion.integration.ais.test import test_app_integration as app_integration_mod
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
+from ion.util import procutils as pu
+
 from ion.core.process.process import Process
 
 from ion.core.messaging.message_client import MessageClient
@@ -55,7 +57,7 @@ class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
     
     @defer.inlineCallbacks
     def tearDown(self):
-        self._print_memory_usage()
+        print pu.print_memory_usage()
         yield self._stop_container()
 
         
