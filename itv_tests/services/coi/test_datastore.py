@@ -33,6 +33,9 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS
 
 from telephus.cassandra.ttypes import InvalidRequestException
 
+from ion.services.coi.test import test_datastore as datastore_test
+create_large_object = datastore_test.create_large_object
+
 
 from ion.core.object import object_utils
 OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version=1)
@@ -40,10 +43,14 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 
 class CassandraBackedDataStoreTest(ItvTestCase):
 
+    repetitions=200
 
     timeout = 600
     app_dependencies = [
-                ("res/deploy/bootlevel4_local.rel", "id=1"),
+            #("res/deploy/bootlevel4_local.rel", "id=1"),
+
+            # Must create a keyspace (name==sysname) before starting the test if you use this method
+            ("res/deploy/bootlevel4.rel", "id=1"),
                 ]
 
     @defer.inlineCallbacks
@@ -54,13 +61,6 @@ class CassandraBackedDataStoreTest(ItvTestCase):
 
         self.proc.op_fetch_blobs = self.proc.workbench.op_fetch_blobs
 
-        repo = yield self.create_large_object()
-
-        result = yield self.proc.workbench.push('datastore',repo)
-
-        self.repo_key = repo.repository_key
-
-
 
     @defer.inlineCallbacks
     def tearDown(self):
@@ -68,48 +68,39 @@ class CassandraBackedDataStoreTest(ItvTestCase):
 
 
     @defer.inlineCallbacks
-    def create_large_object(self):
-
-        rand = open('/dev/random','r')
-
-        repo = yield self.proc.workbench.create_repository(OPAQUE_ARRAY_TYPE)
-        MB = 1024 * 124
-        repo.root_object.value.extend(rand.read(2 *MB))
-
-        repo.commit('Commit before send...')
-
-        log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
-
-        rand.close()
-
-
-        defer.returnValue(repo)
-
-    @defer.inlineCallbacks
     def test_large_objects(self):
 
 
-        for i in range(300):
-            repo = yield self.create_large_object()
+        for i in range(self.repetitions):
+            repo = yield create_large_object(self.proc.workbench)
 
             result = yield self.proc.workbench.push('datastore',repo)
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
-            print pu.print_memory_usage()
-            self.proc.workbench.clear_repository(repo)
 
+            self.proc.workbench.clear_repository(repo)
+            mem = yield pu.print_memory_usage()
+            log.info(mem)
 
 
     @defer.inlineCallbacks
     def test_pull_object(self):
 
-        for i in range(4):
+        repo = yield create_large_object(self.proc.workbench)
+
+        result = yield self.proc.workbench.push('datastore',repo)
+
+        self.repo_key = repo.repository_key
+
+        for i in range(self.repetitions):
 
             result = yield self.proc.workbench.pull('datastore',self.repo_key)
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
-            print pu.print_memory_usage()
+
             self.proc.workbench.manage_workbench_cache('Test runner context!')
-            print self.proc.workbench_memory()
+            mem = yield pu.print_memory_usage()
+            log.info(mem)
+            log.info(self.proc.workbench_memory())
