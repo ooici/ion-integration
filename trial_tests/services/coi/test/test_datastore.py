@@ -32,8 +32,59 @@ from telephus.cassandra.ttypes import InvalidRequestException
 
 from ion.services.coi.test.test_datastore import DataStoreTest
 
+import binascii
 from ion.core.object import object_utils
 OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version=1)
+
+
+
+@defer.inlineCallbacks
+def my_create_large_object(self, wb):
+    repo = yield wb.create_repository(OPAQUE_ARRAY_TYPE)
+    MB = 1024 * 124
+    rand = open('/dev/random','r')
+
+    repo.root_object.value.extend(rand.read(2 *MB))
+
+    repo.commit('Commit before send...')
+
+    log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
+
+    rand.close()
+
+    defer.returnValue(repo)
+
+
+
+
+class BlobsStoreTest(DataStoreTest):
+
+    @defer.inlineCallbacks
+    def test_get_blobs(self):
+
+        print 'Starting test_get_blobs'
+
+        wb = self.ds1.workbench
+
+        obj_repo = yield self.create_large_object(wb)
+
+        print 'Created large object'
+
+
+        for i in range(160):
+            load_repo = yield wb.create_repository(OPAQUE_ARRAY_TYPE)
+
+            print 'Calling get blobs'
+            print obj_repo.commit_head
+            blobs = yield wb._get_blobs(load_repo,[obj_repo.commit_head.MyId])
+
+            print 'Got blobs: "%s" ' % str([binascii.b2a_hex(key) for key in blobs.keys()])
+
+            #wb.clear_repository(load_repo)
+
+            print pu.print_memory_usage()
+
+    create_large_object = my_create_large_object
 
 
 class CassandraBackedDataStoreTest(DataStoreTest):
@@ -148,50 +199,13 @@ class CassandraBackedDataStoreTest(DataStoreTest):
         log.info('DataStore1 Push Complex addressbook to DataStore1: complete')
 
 
-    
-    def _print_memory_usage(self):
-        """
-        @brief Prints the memory usage of the container processes.
-    
-         Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
-         twistd container processes.
-        """
-    
-        
-        log.info("Started the containers")
-        ps_args = ["-o args,command,rss,vsize",  "-p", str(os.getpid())]
-        #I'd rather not execute this through the shell, but the output from the command was truncated
-        #when I did not set shell=True.
-        try:
-            p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
-            std_output = p.communicate()[0]
-            print std_output
-            line2 = std_output.split(os.linesep)[1]
-            rss = line2.split()[3]
-            log.info("RSS: %s" % (rss,))
-        except OSError, ex:
-            log.info("subprocess.Popen raised an OSError")
-            log.info(ex.args)
+    create_large_object = my_create_large_object
 
     @defer.inlineCallbacks
     def test_large_objects(self):
 
-        rand = open('/dev/random','r')
-        
-        @defer.inlineCallbacks
-        def create_large_object():
-            repo = yield self.wb1.workbench.create_repository(OPAQUE_ARRAY_TYPE)
-            MB = 1024 * 124
-            repo.root_object.value.extend(rand.read(2 *MB))
-
-            repo.commit('Commit before send...')
-
-            log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
-
-            defer.returnValue(repo)
-
         for i in range(300):
-            repo = yield create_large_object()
+            repo = yield self.create_large_object(self.wb1.workbench)
 
             result = yield self.wb1.workbench.push('datastore',repo)
 
@@ -200,12 +214,9 @@ class CassandraBackedDataStoreTest(DataStoreTest):
             log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
             log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
 
-            self._print_memory_usage()
-            self.wb1.workbench.clear_repository(repo)
+            print pu.print_memory_usage()
+            self.wb1.workbench.manage_workbench_cache('Test runner context!')
 
-        
-         
-        rand.close()
 
 
 
@@ -222,5 +233,30 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
             log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
             log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
-            self._print_memory_usage()
+            pu.print_memory_usage()
             
+
+    @defer.inlineCallbacks
+    def test_get_blobs(self):
+
+        print 'Starting test_get_blobs'
+
+        wb = self.ds1.workbench
+
+        obj_repo = yield self.create_large_object(wb)
+
+        print 'Created large object'
+
+
+        for i in range(160):
+            load_repo = yield wb.create_repository(OPAQUE_ARRAY_TYPE)
+
+            print 'Calling get blobs'
+            print obj_repo.commit_head
+            blobs = yield wb._get_blobs(load_repo,[obj_repo.commit_head.MyId])
+
+            print 'Got blobs: "%s" ' % str([binascii.b2a_hex(key) for key in blobs.keys()])
+
+            #wb.clear_repository(load_repo)
+
+            print pu.print_memory_usage()
