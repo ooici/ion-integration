@@ -24,9 +24,6 @@ class VVDM8(VVBase):
     @defer.inlineCallbacks
     def setup(self):
 
-        print "HI I AM IN SETUP"
-        log.critical("HI I AM SETTING UP")
-
         # start full system
         yield self._start_itv(files=["itv_start_files/boot_level_4_local.itv",
                                      "itv_start_files/boot_level_5.itv",
@@ -36,8 +33,6 @@ class VVDM8(VVBase):
                                      "itv_start_files/boot_level_9.itv",
                                      "itv_start_files/4x_boot_level_10.itv"])
 
-        print "YEA DIDE IT"
-        log.critical("I DONE PASSED SETIN UP")
         # message observer - spawning here means we don't have to listen to startup stuff
         self._mo = InteractionObserver()
         yield self._mo.spawn()
@@ -64,6 +59,10 @@ class VVDM8(VVBase):
 
         self._mscweb = MSCWebProcess()
         yield self._mscweb.spawn()
+
+        # open a browser
+        openosp = OSProcess(binary="/usr/bin/open", spawnargs=["http://localhost:9999"])
+        yield openosp.spawn()
 
     @defer.inlineCallbacks
     def _ingest_dataset(self):
@@ -124,30 +123,4 @@ class VVDM8(VVBase):
         """
         4. Show an MSC of what just happened
         """
-        # open a browser
-        openosp = OSProcess(binary="/usr/bin/open", spawnargs=["http://localhost:9999"])
-        yield openosp.spawn()
-
-        '''
-        rawfile = '/tmp/msc-dm8-%s.txt' % time.time()
-        f = open(rawfile, 'w')
-        f.write(self._mo.writeout_msc())
-        f.close()
-
-        md =  os.path.join(os.getcwd().rsplit("/", 1)[0], 'mschtml')
-        mscgen = OSProcess(binary=os.path.join(md, 'mschtml.py'), spawnargs=[rawfile, "--ignore=rocess", "--ignore=exchange_manag", "--ignore=pubsub"])
-        res = yield mscgen.spawn()
-
-        # dump res stdout to file
-        htmlfile = '%s.html' % rawfile
-        f = open(htmlfile, 'w')
-        for lines in res['outlines']:
-            f.write(lines)
-        f.close()
-
-        # open it in a browser
-        openosp = OSProcess(binary="/usr/bin/open", spawnargs=[htmlfile])
-        yield openosp.spawn()
-        '''
-
-
+        pass
