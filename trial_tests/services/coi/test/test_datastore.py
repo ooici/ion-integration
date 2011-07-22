@@ -30,14 +30,21 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS
 from telephus.cassandra.ttypes import InvalidRequestException
 
 
-from ion.services.coi.test.test_datastore import DataStoreTest
+from ion.services.coi.test import test_datastore as datastore_test
+create_large_object = datastore_test.create_large_object
 
+import binascii
 from ion.core.object import object_utils
 OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version=1)
 
 
-class CassandraBackedDataStoreTest(DataStoreTest):
 
+
+# This is a bit of a hack - to keep it from running the tests on the original DataStoreTest class as well.
+class CassandraBackedDataStoreTest(datastore_test.DataStoreTest):
+
+
+    repetitions = 100
 
     timeout = 600
     username = CONF.getValue('cassandra_username', None)
@@ -53,8 +60,10 @@ class CassandraBackedDataStoreTest(DataStoreTest):
                       "password": password }
                 })
 
-    services.append(DataStoreTest.services[1])
+    services.append(datastore_test.DataStoreTest.services[1])
 
+    # This test does not work with the cassandra backend by design!
+    del datastore_test.DataStoreTest.test_put_blobs
 
     @defer.inlineCallbacks
     def setUp(self):
@@ -81,7 +90,7 @@ class CassandraBackedDataStoreTest(DataStoreTest):
         yield test_harness.run_cassandra_config()
 
 
-        yield DataStoreTest.setup_services(self)
+        yield datastore_test.DataStoreTest.setup_services(self)
 
 
     @defer.inlineCallbacks
@@ -95,11 +104,10 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         self.test_harness.disconnect()
 
-        yield DataStoreTest.tearDown(self)
+        yield datastore_test.DataStoreTest.tearDown(self)
 
 
-    # This test does not work with the cassandra backend by design!
-    del DataStoreTest.test_put_blobs
+
 
 
     def commit_it(self, i):
@@ -147,80 +155,3 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         log.info('DataStore1 Push Complex addressbook to DataStore1: complete')
 
-
-    
-    def _print_memory_usage(self):
-        """
-        @brief Prints the memory usage of the container processes.
-    
-         Performs a ps command as a subprocess and retrieves the RSS and VSIZE of the 
-         twistd container processes.
-        """
-
-        ps_args = ["-o args,command,rss,vsize",  "-p", str(os.getpid())]
-        #I'd rather not execute this through the shell, but the output from the command was truncated
-        #when I did not set shell=True.
-        try:
-            #p = subprocess.Popen(args=ps_args, executable="/bin/ps", stdout=subprocess.PIPE, shell=True)
-            command = "ps -o args,command,rss,vsize -p " + str(os.getpid())
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-            std_output = p.communicate()[0]
-            print std_output
-            line2 = std_output.split(os.linesep)[1]
-            rss = line2.split()[3]
-            log.info("RSS: %s" % (rss,))
-        except OSError, ex:
-            log.info("subprocess.Popen raised an OSError")
-            log.info(ex.args)
-
-    @defer.inlineCallbacks
-    def test_large_objects(self):
-
-        rand = open('/dev/random','r')
-        
-        @defer.inlineCallbacks
-        def create_large_object():
-            repo = yield self.wb1.workbench.create_repository(OPAQUE_ARRAY_TYPE)
-            MB = 1024 * 124
-            repo.root_object.value.extend(rand.read(2 *MB))
-
-            repo.commit('Commit before send...')
-
-            log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
-
-            defer.returnValue(repo)
-
-        for i in range(300):
-            repo = yield create_large_object()
-
-            result = yield self.wb1.workbench.push('datastore',repo)
-
-            self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
-
-            log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
-            log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
-
-            self._print_memory_usage()
-            self.wb1.workbench.clear_repository(repo)
-
-        
-         
-        rand.close()
-
-
-
-    @defer.inlineCallbacks
-    def test_checkout_a_lot(self):
-
-        
-        for i in range(30):
-            yield self.test_checkout_defaults()
-            self.wb1.workbench.manage_workbench_cache('Test runner context!')
-
-            for key, repo in self.wb1.workbench._repo_cache.iteritems():
-                log.info('Repo Name - %s, size - %d, # of blobs - %d' % (key, repo.__sizeof__(), len(repo.index_hash)))
-
-            log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
-            log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
-            self._print_memory_usage()
-            
