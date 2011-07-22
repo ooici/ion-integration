@@ -104,7 +104,7 @@ class CassandraBackedDataStoreTest(ItvTestCase):
     @defer.inlineCallbacks
     def test_pull_object(self):
 
-        for i in range(300):
+        for i in range(4):
 
             result = yield self.proc.workbench.pull('datastore',self.repo_key)
 

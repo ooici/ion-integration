@@ -30,7 +30,7 @@ from ion.services.coi.datastore_bootstrap.ion_preload_config import ION_DATASETS
 from telephus.cassandra.ttypes import InvalidRequestException
 
 
-from ion.services.coi.test.test_datastore import DataStoreTest
+from ion.services.coi.test.test_datastore import DataStoreTest, create_large_object
 
 import binascii
 from ion.core.object import object_utils
@@ -38,57 +38,10 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 
 
 
-@defer.inlineCallbacks
-def my_create_large_object(self, wb):
-    repo = yield wb.create_repository(OPAQUE_ARRAY_TYPE)
-    MB = 1024 * 124
-    rand = open('/dev/random','r')
-
-    repo.root_object.value.extend(rand.read(2 *MB))
-
-    repo.commit('Commit before send...')
-
-    log.info('Repository size: %d bytes, array len %d' % (repo.__sizeof__(), len(repo.root_object.value)))
-
-    rand.close()
-
-    defer.returnValue(repo)
-
-
-
-
-class BlobsStoreTest(DataStoreTest):
-
-    @defer.inlineCallbacks
-    def test_get_blobs(self):
-
-        print 'Starting test_get_blobs'
-
-        wb = self.ds1.workbench
-
-        obj_repo = yield self.create_large_object(wb)
-
-        print 'Created large object'
-
-
-        for i in range(160):
-            load_repo = yield wb.create_repository(OPAQUE_ARRAY_TYPE)
-
-            print 'Calling get blobs'
-            print obj_repo.commit_head
-            blobs = yield wb._get_blobs(load_repo,[obj_repo.commit_head.MyId])
-
-            print 'Got blobs: "%s" ' % str([binascii.b2a_hex(key) for key in blobs.keys()])
-
-            #wb.clear_repository(load_repo)
-
-            print pu.print_memory_usage()
-
-    create_large_object = my_create_large_object
-
-
 class CassandraBackedDataStoreTest(DataStoreTest):
 
+
+    repetitions = 200
 
     timeout = 600
     username = CONF.getValue('cassandra_username', None)
@@ -198,65 +151,3 @@ class CassandraBackedDataStoreTest(DataStoreTest):
 
         log.info('DataStore1 Push Complex addressbook to DataStore1: complete')
 
-
-    create_large_object = my_create_large_object
-
-    @defer.inlineCallbacks
-    def test_large_objects(self):
-
-        for i in range(300):
-            repo = yield self.create_large_object(self.wb1.workbench)
-
-            result = yield self.wb1.workbench.push('datastore',repo)
-
-            self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
-
-            log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
-            log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
-
-            print pu.print_memory_usage()
-            self.wb1.workbench.manage_workbench_cache('Test runner context!')
-
-
-
-
-    @defer.inlineCallbacks
-    def test_checkout_a_lot(self):
-
-        
-        for i in range(30):
-            yield self.test_checkout_defaults()
-            self.wb1.workbench.manage_workbench_cache('Test runner context!')
-
-            for key, repo in self.wb1.workbench._repo_cache.iteritems():
-                log.info('Repo Name - %s, size - %d, # of blobs - %d' % (key, repo.__sizeof__(), len(repo.index_hash)))
-
-            log.info('Datastore workbench size: %d' % self.ds1.workbench._repo_cache.total_size)
-            log.info('Process workbench size: %d' % self.wb1.workbench._repo_cache.total_size)
-            pu.print_memory_usage()
-            
-
-    @defer.inlineCallbacks
-    def test_get_blobs(self):
-
-        print 'Starting test_get_blobs'
-
-        wb = self.ds1.workbench
-
-        obj_repo = yield self.create_large_object(wb)
-
-        print 'Created large object'
-
-
-        for i in range(160):
-            load_repo = yield wb.create_repository(OPAQUE_ARRAY_TYPE)
-
-            print 'Calling get blobs'
-            print obj_repo.commit_head
-            blobs = yield wb._get_blobs(load_repo,[obj_repo.commit_head.MyId])
-
-            print 'Got blobs: "%s" ' % str([binascii.b2a_hex(key) for key in blobs.keys()])
-
-            #wb.clear_repository(load_repo)
-
-            print pu.print_memory_usage()
