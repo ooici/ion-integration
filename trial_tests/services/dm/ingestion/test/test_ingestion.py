@@ -9,7 +9,7 @@
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
 from ion.util.iontime import IonTime
 from ion.core import ioninit
@@ -33,17 +33,14 @@ GROUP_TYPE = create_type_identifier(object_id=10020, version=1)
 CONF = ioninit.config(__name__)
 
 
-class FakeDelayedCall(object):
-
-    def active(self):
-        return True
-
-    def cancel(self):
+def create_delayed_call(timeoutval=None):
+    timeoutval = timeoutval or 10000
+    def _timeout():
+        # do nothing
         pass
-
-    def delay(self, int):
-        pass
-
+    dc = reactor.callLater(timeoutval, _timeout)
+    dc.ingest_service_timeout = timeoutval
+    return dc
 
 class IngestionTest(IonTestCase):
     """
@@ -107,7 +104,7 @@ class IngestionTest(IonTestCase):
         log.debug('Process ID:' + str(ingestion1))
         self.ingest= self._get_procinstance(ingestion1)
         
-        self.ingest.timeoutcb = FakeDelayedCall()
+        self.ingest.timeoutcb = create_delayed_call()
         
         ds1 = yield self.sup.get_child_id('ds1')
         log.debug('Process ID:' + str(ds1))
