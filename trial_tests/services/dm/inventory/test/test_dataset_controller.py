@@ -114,8 +114,10 @@ class DatasetControllerTest(IonTestCase):
         yield pub.create_and_publish_event(origin=SCHEDULE_TYPE_DSC_RSYNC,
                                           task_id=dataset_controller.task_id)
 
-        yield asleep(5)
-
-        self.failUnless(check_for_ncml_files(dataset_controller.ncml_path))
+        log.info("dataset_controller.ncml_path %s" % (dataset_controller.ncml_path))
+        
+        #The NCML files will be at the path, after the scheduled event has happened
+        while not check_for_ncml_files(dataset_controller.ncml_path):
+            yield asleep(2)
 
 
