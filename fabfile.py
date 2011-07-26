@@ -103,10 +103,11 @@ def _replaceVersionInFile(filename, matchRe, template, versionCb):
     with open(filename, 'w') as wfile:
         wfile.writelines(lines)
 
+branchNameRe = re.compile('develop(\\^[0-9]+)?$')
 def _ensureClean():
     with hide('running', 'stdout', 'stderr'):
         branch = local('git name-rev --name-only HEAD', capture=True)
-        if branch != 'develop':
+        if not branchNameRe.match(branch):
             abort('You must be in the "develop" branch (you are in "%s").' % (branch))
 
         changes = local('git status -s --untracked-files=no', capture=True)
