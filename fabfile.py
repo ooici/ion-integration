@@ -24,6 +24,7 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'java-build-dev': 'version=%(major)s.%(minor)s.%(micro)s-dev'
     , 'git-tag': 'v%(major)s.%(minor)s.%(micro)s'
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
+    , 'git-proto-greater-message': 'Update ionproto>=%(major)s.%(minor)s.%(micro)s in setup.py'
     , 'short': '%(major)s.%(minor)s.%(micro)s'
     , 'setup-py': "version = '%(major)s.%(minor)s.%(micro)s',"
     , 'setup-py-proto-equal': "'ionproto==%(major)s.%(minor)s.%(micro)s',"
@@ -235,14 +236,17 @@ def python():
 
         local('python setup.py sdist')
         local('chmod -R 775 dist')
-
-        local('git checkout setup.py')
         _deploy('dist/*.tar.gz')
 
-        # Set the ionproto dependency before tagging
-        _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-greater'], lambda old: protoVersion[0])
-
         remote = _gitTag(version)
+
+        # Set the ionproto dependency after version tagging
+        _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-greater'], lambda old: protoVersion[0])
+        msg = versionTemplates['git-proto-greater-message'] % protoVersion[0]
+        local('git commit -am "%s"' % (msg))
+        branch = 'develop'
+        local('git push %s %s' % (remote, branch))
+
         #_gitForwardMaster(remote)
 
 class JavaVersion(object):
