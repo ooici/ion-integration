@@ -5,19 +5,16 @@ from ion.vandv.vandvbase import VVBase
 import os, os.path
 
 from ion.core.process.process import Process
-from ion.interact.mscweb import MSCWebProcess
+#from ion.interact.mscweb import MSCWebProcess
 from ion.util.os_process import OSProcess
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
-class VVDM8(VVBase):
+class VVDM22(VVBase):
     """
-    [Demonstration] The dynamic data distribution services shall support 
-                    multiple data messages on a given data stream.
-    [Demonstration] The dynamic data distribution services shall associate
-                    data streams with data resources.
+    [Test] The persistent archive services shall support data versioning
     """
 
     @defer.inlineCallbacks
@@ -30,9 +27,9 @@ class VVDM8(VVBase):
                                      "itv_start_files/boot_level_7.itv",
                                      "itv_start_files/boot_level_8.itv",
                                      "itv_start_files/boot_level_9.itv",
-                                     "itv_start_files/4x_boot_level_10.itv"])
+                                     "itv_start_files/boot_level_10.itv"])
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm8_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm22_proc'})
         yield self._proc.spawn()
 
         # supplement added subscriber - we yield on updates here
@@ -52,29 +49,14 @@ class VVDM8(VVBase):
 
         yield self._proc.register_life_cycle_object(self._ingest_sub)
 
+        """
         self._mscweb = MSCWebProcess()
         yield self._mscweb.spawn()
 
         # open a browser
         openosp = OSProcess(binary="/usr/bin/open", spawnargs=["http://localhost:9999"])
         yield openosp.spawn()
-
-    @defer.inlineCallbacks
-    def _ingest_dataset(self):
-
-        ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm8", "ndbc_sos-44014_winds.dsreg")])
-        fin = yield dsreg.spawn()
-
-        # pull out dataset id
-        for lines in fin['outlines']:
-            for line in lines.split("\n"):
-                if "data_set_id: " in line:
-                    _, dsid = line.split(" ")
-                    defer.returnValue(dsid.strip().strip("\""))
-                    break
-
-        defer.returnValue(None)
+        """
 
     @defer.inlineCallbacks
     def s1_ingest_initial_dataset(self):
@@ -82,7 +64,17 @@ class VVDM8(VVBase):
         1. Instruct one dataset agent to ingest initial dataset
         """
 
-        self._dataset_id = yield self._ingest_dataset()
+        ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm22", "ndbc_sos-44014_winds.dsreg")])
+        fin = yield dsreg.spawn()
+
+        # pull out dataset id
+        for lines in fin['outlines']:
+            for line in lines.split("\n"):
+                if "data_set_id: " in line:
+                    _, dsid = line.split(" ")
+                    self._dataset_id = dsid.strip().strip("\"")
+                    break
 
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
@@ -92,7 +84,7 @@ class VVDM8(VVBase):
     @defer.inlineCallbacks
     def s2_generate_update(self):
         """
-        2. Instruct next dataset agent to grab any supplemental data
+        2. Instruct dataset agent to grab any supplemental data
         """
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
         dsreg = OSProcess(binary=os.path.join(ijr, 'generate_update_event'), startdir=ijr, spawnargs=[self._dataset_id])
@@ -104,7 +96,7 @@ class VVDM8(VVBase):
     @defer.inlineCallbacks
     def s3_generate_update_2(self):
         """
-        3. Instruct next dataset agent to grab any supplemental data (again)
+        3. Instruct dataset agent to grab any supplemental data (again)
         """
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
         dsreg = OSProcess(binary=os.path.join(ijr, 'generate_update_event'), startdir=ijr, spawnargs=[self._dataset_id])
@@ -114,8 +106,10 @@ class VVDM8(VVBase):
         self._def_sup_added = defer.Deferred()
 
     @defer.inlineCallbacks
-    def s4_show_msc(self):
+    def s4_show_versions(self):
         """
-        4. Show an MSC of what just happened
+        4. Show dataset and all available versions of it
         """
+        # @TODO
         pass
+
