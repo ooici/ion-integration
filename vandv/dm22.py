@@ -2,8 +2,10 @@ from twisted.internet import defer
 
 #from ion.util import procutils as pu
 from ion.vandv.vandvbase import VVBase
-import os, os.path
+import os, os.path, time
 
+from ion.core.object.object_utils import sha1_to_hex
+from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.core.process.process import Process
 #from ion.interact.mscweb import MSCWebProcess
 from ion.util.os_process import OSProcess
@@ -31,6 +33,8 @@ class VVDM22(VVBase):
 
         self._proc = Process(spawnargs={'proc-name':'vvdm22_proc'})
         yield self._proc.spawn()
+
+        self._rc = ResourceClient(proc=self._proc)
 
         # supplement added subscriber - we yield on updates here
         self._def_sup_added = defer.Deferred()  # gets called back every time we get one, we must manually reset
@@ -81,6 +85,39 @@ class VVDM22(VVBase):
 
         print "We got", self._dataset_id
 
+        yield self._print_cur_ds_state()
+
+    @defer.inlineCallbacks
+    def _print_cur_ds_state(self):
+        self._dset = yield self._rc.get_instance(self._dataset_id)
+
+        repo = self._dset.Repository
+
+        # get all parent commits, similar to list_parent_commits but not just keys
+        commits = []
+        branch = repo.get_branch(repo._current_branch.branchkey)
+        cref = branch.commitrefs[0]
+
+        while cref:
+            commits.append(cref)
+
+            if cref.parentrefs:
+                cref = cref.parentrefs[0].commitref
+            else:
+                cref = None
+
+        # parent -> child ordering
+        commits.reverse()
+
+        print '========= Dataset History: =========='
+        print '= Dataset ID: %s' % repo.repository_key
+        print '= Dataset Branch: %s' % repo.current_branch_key()
+
+        for i, c in enumerate(commits):
+            print i+1, "\t", time.strftime("%d %b, %H:%M:%S", time.gmtime(c.date)), "\t", sha1_to_hex(c.MyId), "\t", c.comment
+
+        print '====================================='
+
     @defer.inlineCallbacks
     def s2_generate_update(self):
         """
@@ -92,6 +129,7 @@ class VVDM22(VVBase):
 
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
+        yield self._print_cur_ds_state()
 
     @defer.inlineCallbacks
     def s3_generate_update_2(self):
@@ -104,12 +142,12 @@ class VVDM22(VVBase):
 
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
+        yield self._print_cur_ds_state()
 
     @defer.inlineCallbacks
     def s4_show_versions(self):
         """
         4. Show dataset and all available versions of it
         """
-        # @TODO
-        pass
+        yield self._print_cur_ds_state()
 
