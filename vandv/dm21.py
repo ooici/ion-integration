@@ -104,12 +104,13 @@ class VVDM21(VVBase):
 
         print "We got", self._dataset_id
 
-    @defer.inlineCallbacks
+    
     def s2_kill_cassandra(self):
         """
         2. Go kill a Cassandra node. I'll be waiting here... 
         """
         pass
+        
         
     @defer.inlineCallbacks
     def s3_generate_update(self):
