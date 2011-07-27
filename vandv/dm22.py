@@ -4,7 +4,7 @@ from twisted.internet import defer
 from ion.vandv.vandvbase import VVBase
 import os, os.path, time
 
-from ion.core.object.object_utils import sha1_to_hex
+from ion.core.object.object_utils import sha1_to_hex, create_type_identifier
 from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.core.process.process import Process
 #from ion.interact.mscweb import MSCWebProcess
@@ -13,6 +13,8 @@ from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubsc
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
+
+CDM_BOUNDED_ARRAY_TYPE = create_type_identifier(object_id=10021, version=1)
 
 class VVDM22(VVBase):
     """
@@ -89,13 +91,13 @@ class VVDM22(VVBase):
 
     @defer.inlineCallbacks
     def _print_cur_ds_state(self):
-        self._dset = yield self._rc.get_instance(self._dataset_id)
+        self._dset = yield self._rc.get_instance(self._dataset_id, excluded_types=[CDM_BOUNDED_ARRAY_TYPE])
 
         repo = self._dset.Repository
 
         # get all parent commits, similar to list_parent_commits but not just keys
         commits = []
-        branch = repo.get_branch(repo._current_branch.branchkey)
+        branch = repo._current_branch
         cref = branch.commitrefs[0]
 
         while cref:
@@ -115,6 +117,38 @@ class VVDM22(VVBase):
 
         for i, c in enumerate(commits):
             print i+1, "\t", time.strftime("%d %b, %H:%M:%S", time.gmtime(c.date)), "\t", sha1_to_hex(c.MyId), "\t", c.comment
+            links = []
+            try:
+                for var in c.objectroot.resource_object.root_group.variables:
+                    links.extend(var.content.bounded_arrays.GetLinks())
+
+                # get em
+                yield repo.fetch_links(links)
+
+                for var in c.objectroot.resource_object.root_group.variables:
+                    outlines = []
+
+                    for ba in var.content.bounded_arrays:
+                        outlines.append("%s%s\t%s" % (" "*40, sha1_to_hex(ba.MyId)[0:6] + "...", " ".join(["[%s+%s]" % (x.origin, x.size) for x in ba.bounds])))
+
+                    varname = " "*4 + str(var.name)
+                    if len(outlines) > 1:
+                        varname += " (%d)" % len(outlines)
+
+                    outlines[0] = varname + outlines[0][len(varname):]
+
+                    print "\n".join(outlines)
+
+            except Exception, ex:
+                pass
+                #print ex
+                #print dir(var)
+                #print "made it here"
+                #links.extend(var.content.bounded_arrays.GetLinks())
+
+
+            # display em
+
 
         print '====================================='
 
