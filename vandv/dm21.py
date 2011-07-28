@@ -10,6 +10,8 @@ from ion.interact.mscweb import MSCWebProcess
 from ion.util.os_process import OSProcess
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
 
+from ion.ops.resources import print_dataset_history
+
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
@@ -105,36 +107,28 @@ class VVDM21(VVBase):
         print "We got", self._dataset_id
 
     
-    def s2_kill_cassandra(self):
+    @defer.inlineCallbacks
+    def s2_show_dataset_history(self):
         """
-        2. Go kill a Cassandra node. I'll be waiting here... 
+        2. Show the history of the dataset
+        """
+        ds_history = yield print_dataset_history(self._dataset_id)
+        print ds_history
+        
+    def s3_kill_cassandra(self):
+        """
+        3. Go kill a Cassandra node. I'll be waiting here... 
         """
         pass
         
-        
     @defer.inlineCallbacks
-    def s3_generate_update(self):
+    def s4_show_dataset_history(self):
         """
-        3. Instruct next dataset agent to grab any supplemental data
+        4. Show the history of the dataset
         """
-        ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'generate_update_event'), startdir=ijr, spawnargs=[self._dataset_id])
-        yield dsreg.spawn()
+        ds_history = yield print_dataset_history(self._dataset_id)
+        print ds_history   
 
-        yield self._def_sup_added
-        self._def_sup_added = defer.Deferred()
-
-    @defer.inlineCallbacks
-    def s4_generate_update_2(self):
-        """
-        4. Instruct next dataset agent to grab any supplemental data (again)
-        """
-        ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'generate_update_event'), startdir=ijr, spawnargs=[self._dataset_id])
-        yield dsreg.spawn()
-
-        yield self._def_sup_added
-        self._def_sup_added = defer.Deferred()
 
     @defer.inlineCallbacks
     def s5_show_msc(self):
