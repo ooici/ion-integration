@@ -8,7 +8,7 @@ from ion.core.object.object_utils import sha1_to_hex, create_type_identifier
 from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.core.process.process import Process
 #from ion.interact.mscweb import MSCWebProcess
-from ion.util.os_process import OSProcess
+from ion.util.os_process import OSProcess, OSProcessError
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
 
 import ion.util.ionlog
@@ -16,24 +16,24 @@ log = ion.util.ionlog.getLogger(__name__)
 
 CDM_BOUNDED_ARRAY_TYPE = create_type_identifier(object_id=10021, version=1)
 
-class VVDM22(VVBase):
+class VVDM11(VVBase):
     """
-    [Test] The persistent archive services shall support data versioning
+    [Test] The data catalog services shall permanently associate metadata with all cataloged data
     """
 
     @defer.inlineCallbacks
     def setup(self):
 
         # start full system
-        yield self._start_itv(files=["itv_start_files/boot_level_4_local.itv",
-                                     "itv_start_files/boot_level_5.itv",
-                                     "itv_start_files/boot_level_6.itv",
-                                     "itv_start_files/boot_level_7.itv",
-                                     "itv_start_files/boot_level_8.itv",
-                                     "itv_start_files/boot_level_9.itv",
-                                     "itv_start_files/boot_level_10.itv"])
+        self._first_run = yield self._start_itv(files=["itv_start_files/boot_level_4.itv",
+                                                       "itv_start_files/boot_level_5.itv",
+                                                       "itv_start_files/boot_level_6.itv",
+                                                       "itv_start_files/boot_level_7.itv",
+                                                       "itv_start_files/boot_level_8.itv",
+                                                       "itv_start_files/boot_level_9.itv",
+                                                       "itv_start_files/boot_level_10.itv"])
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm22_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm11_proc'})
         yield self._proc.spawn()
 
         self._rc = ResourceClient(proc=self._proc)
@@ -139,7 +139,7 @@ class VVDM22(VVBase):
 
                     print "\n".join(outlines)
 
-            except Exception, ex:
+            except:# Exception, ex:
                 pass
                 #print ex
                 #print dir(var)
@@ -179,9 +179,58 @@ class VVDM22(VVBase):
         yield self._print_cur_ds_state()
 
     @defer.inlineCallbacks
-    def s4_show_versions(self):
+    def s4_teardown_system(self):
         """
-        4. Show dataset and all available versions of it
+        4. Tell entire system to shutdown.
+        """
+
+        pcount = 0
+        psosp = OSProcess(binary="/bin/ps", startargs=["aux"])
+        res = yield psosp.spawn()
+
+        for lines in res['outlines']:
+            for line in lines.split('\n'):
+                if "twistd" in line:
+                    pcount += 1
+        print "twistd processes: ", pcount
+
+        try:
+            yield self._first_run.close(timeout=10)
+        except OSProcessError:#, ex:
+            pass
+
+        pcount = 0
+        psosp = OSProcess(binary="/bin/ps", startargs=["aux"])
+        res = yield psosp.spawn()
+
+        for lines in res['outlines']:
+            for line in lines.split('\n'):
+                if "twistd" in line:
+                    pcount += 1
+        print "twistd processes: ", pcount
+
+    @defer.inlineCallbacks
+    def s5_restart_system(self):
+        """
+        5. Restart the system
+        """
+
+        print "Restarting system"
+        # start full system
+        self._second_run = yield self._start_itv(files=["itv_start_files/boot_level_4.itv",
+                                                        "itv_start_files/boot_level_5.itv",
+                                                        "itv_start_files/boot_level_6.itv",
+                                                        "itv_start_files/boot_level_7.itv",
+                                                        "itv_start_files/boot_level_8.itv",
+                                                        "itv_start_files/boot_level_9.itv",
+                                                        "itv_start_files/boot_level_10.itv"])
+        print "Restarted"
+
+
+    @defer.inlineCallbacks
+    def s6_show_versions(self):
+        """
+        6. Show dataset and all available versions of it
         """
         yield self._print_cur_ds_state()
 
