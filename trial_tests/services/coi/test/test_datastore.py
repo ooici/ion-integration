@@ -137,7 +137,7 @@ class CassandraBackedDataStoreTest(datastore_test.DataStoreTest):
             yield d
             '''
 
-        for i in range(1000):
+        for i in range(100):
             #log.debug('Calling commit_it: %d' % i)
             self.repo.root_object.owner.name = 'my name %d' % i
             self.repo.root_object.person[0].name = 'other name %d' % i
