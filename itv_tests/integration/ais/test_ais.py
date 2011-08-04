@@ -3,6 +3,8 @@
 @author Matt Rodriguez
 @brief Starts the AIS processes in different containers, makes requests of the AIS application 
 tracks the memory process.
+
+This is for performance benchmarking.
 """
 import time
 from twisted.internet import defer
@@ -24,6 +26,7 @@ from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.services.coi.resource_registry.association_client import AssociationClient
 
 
+"""
 
 class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
     
@@ -65,3 +68,4 @@ class TestAISProcesses(ItvTestCase, app_integration_module.AppIntegrationTest):
         log.info("Started the containers")
         
      
+"""
