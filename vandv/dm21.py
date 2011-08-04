@@ -129,10 +129,24 @@ class VVDM21(VVBase):
         ds_history = yield print_dataset_history(self._dataset_id)
         print ds_history   
 
-
-    @defer.inlineCallbacks
-    def s5_show_msc(self):
+    def s5_kill_cassandra(self):
         """
-        5. Show an MSC of what just happened
+        5. Go kill another Cassandra node. I'll be waiting here... 
+        """
+        pass
+    
+    
+    @defer.inlineCallbacks
+    def s6_show_dataset_history(self):
+        """
+        6. Show the history of the dataset
+        """
+        ds_history = yield print_dataset_history(self._dataset_id)
+        print ds_history 
+        
+    @defer.inlineCallbacks
+    def s7_show_msc(self):
+        """
+        7. Show an MSC of what just happened
         """
         pass
