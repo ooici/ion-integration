@@ -1,5 +1,3 @@
-
-
 {
 
 'ion.core.data.storage_configuration_utility':{
@@ -73,8 +71,8 @@
 },
 
 'trial_tests.core.object.test.test_codec':{	
-'filename' : 
-'./ion_data/WHOTS_7_near-real-time_Mooring_Data_System_2.ooicdm.tgz',
+    'filename' : 
+    './ion_data/WHOTS_7_near-real-time_Mooring_Data_System_2.ooicdm.tgz',
 },
 
 
@@ -82,87 +80,88 @@
 # Path to files relative to ioncore-python directory!
 'ingest_files' :
 [
-'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1.ooicdm.tgz',
-'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1_u1.ooicdm.tgz',
-'./ion_data/NTAS_10_Real-time_Mooring_Data_System_1_u2.ooicdm.tgz'
+    './ion_data/NTAS_10_Real-time_Mooring_Data_System_1.ooicdm.tgz',
+    './ion_data/NTAS_10_Real-time_Mooring_Data_System_1_u1.ooicdm.tgz',
+    './ion_data/NTAS_10_Real-time_Mooring_Data_System_1_u2.ooicdm.tgz'
 ],
 },
 
 
 'ion.test.iontest':{
     'broker_host' : 'rabbitmq-dev0',
-    },
+},
 
 
 'ion.services.coi.datastore':{
     'preload': {'ion_datasets':True},
+    'username':'$cassandra_username',
+    'password':'$cassandra_password'
 },
 
 'trial_tests.core.data.test.test_manager':{
-	'host':'cassandra-dev01',
-	'cassandra_username':None,
-    'cassandra_password':None
+    'host':'cassandra-dev01',
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password'
 },
 
 
 'ion.services.dm.preservation.cassandra_manager_agent':{
-         'host': 'cassandra-dev01',
-         'port': 9160,
-         'cassandra_username':None,
-         'cassandra_password':None 
-        },
+     'host': 'cassandra-dev01',
+     'port': 9160,
+     'cassandra_username':'$cassandra_username',
+     'cassandra_password':'$cassandra_password' 
+},
 
 'trial_tests.integration.ais.test.test_notification_alert':{
- 	'cassandra_username':None,
-    'cassandra_password':None 
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password' 
 },
 
 'trial_tests.services.coi.test.test_datastore':{
-    'cassandra_username':None,
-    'cassandra_password':None, 
- },
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password', 
+},
 
 'trial_tests.services.dm.scheduler.test.test_scheduler':{
-	'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'storage provider':{'host':'cassandra-dev01','port':9160}
 },
 
 'trial_tests.services.dm.inventory.test.test_association_service':{
-    'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'storage provider':{'host':'cassandra-dev01','port':9160}
- },
+},
 
 'trial_tests.core.data.test.test_cassandra_store':{
-    'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'storage provider':{'host':'cassandra-dev01','port':9160}
- },
+},
 
 'trial_tests.core.data.test.test_cassandra_init':{
-    'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'storage provider':{'host':'cassandra-dev01','port':9160}
- },
+},
 
 'trial_tests.core.data.test.test_cassandra_naming':{
-    'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'storage provider':{'host':'cassandra-dev01','port':9160}
- },
+},
 
 'ion.core.data.cassandra_schema_script':{
 #######
 # Used to run cassandra config script:
 #bin/mypython ion/core/data/cassandra_schema_script.py
 ######
-    'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'sysname':'eoitest_buildbot',
     'error_if_existing':False,
 },
-
 
 
 'ion.core.data.cassandra_teardown_script':{
@@ -170,8 +169,8 @@
 # Used to run cassandra config script:
 #bin/mypython ion/core/data/cassandra_schema_script.py
 ######
-    'cassandra_username':None,
-    'cassandra_password':None,
+    'cassandra_username':'$cassandra_username',
+    'cassandra_password':'$cassandra_password',
     'sysname':'eoitest_buildbot',
 },
 
@@ -186,9 +185,5 @@
     # rsync binary set to harmless 'echo' command
     'rsync' : 'echo',
 },
-
-
-
-
 
 }
