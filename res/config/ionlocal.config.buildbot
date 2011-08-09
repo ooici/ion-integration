@@ -176,7 +176,7 @@
 
 'ion.services.dm.inventory.dataset_controller' :{
     'update_interval' : 30,
-    'ncml_path': '/tmp/ncml',
+    'ncml_path': '/tmp',
     'thredds_ncml_url':'datactlr@thredds.oceanobservatories.org:/opt/tomcat/test_ncml',
 },
 
@@ -186,4 +186,8 @@
     'rsync' : 'echo',
 },
 
+'ion.services.dm.inventory.association_service' : {
+    'username':'$cassandra_username',
+    'password':'$cassandra_password'
+}
 }
