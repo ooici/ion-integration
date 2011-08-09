@@ -7,7 +7,7 @@
 
 from twisted.internet import defer
 
-from ion.core.data.cassandra_bootstrap import CassandraSchemaProvider, IndexType
+from ion.core.data.cassandra_bootstrap import CassandraSchemaProvider
 from ion.core.process.process import Process
 from ion.core.object import object_utils
 from ion.core.messaging.message_client import MessageClient
