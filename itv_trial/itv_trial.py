@@ -478,7 +478,7 @@ def main():
         print "\n++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"
 
     # if every test class failed, exit with 2
-    if countfail == resultlen:
+    if countfail == resultlen and countfail != 0 :
         exitcode = 2
 
     sys.exit(exitcode)
