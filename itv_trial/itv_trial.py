@@ -341,6 +341,7 @@ def main():
                 print "CTRL-C PRESSED, ATTEMPTING TO TERMINATE CCS"
 
                 # must cleanup spawned subprocess(es)!
+                ccs.reverse()
                 for cc in ccs:
                     os.kill(cc.pid, signal.SIGTERM)
 
@@ -444,6 +445,7 @@ def main():
 
         def cleanup():
             print "Cleaning up app_dependencies..."
+            ccs.reverse()
             for cc in ccs:
                 print "\tClosing container with pid:", cc.pid
                 os.kill(cc.pid, signal.SIGTERM)
