@@ -314,13 +314,18 @@ def main():
             newenv = os.environ.copy()
             newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
 
+            def squelch_int():
+                # Ignore the SIGINT signal by setting the handler to the standard
+                # signal handler SIG_IGN.
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+
             # spawn container
-            po = subprocess.Popen(sargs, env=newenv)
+            po = subprocess.Popen(sargs, env=newenv, preexec_fn=squelch_int)
 
             # add to list of open containers
             ccs.append(po)
 
-            print "Waiting for container to start:", servicename
+            print "Waiting for container to start:", servicename, " pid#: ", po.pid
 
             # wait for lockfile to appear
             try:
@@ -406,7 +411,7 @@ def main():
  
             if opts.launcher:
                 # do nothing, spinwait for CTRL-C
-                print >> sys.stderr, "LAUNCHER MODE, WAITING FOR TERMINATION"
+                print >> sys.stderr, "LAUNCHER MODE, WAITING FOR TERMINATION - launcher pid:", os.getpid()
                 try:
                     while True:
                         time.sleep(5)
@@ -449,6 +454,8 @@ def main():
             for cc in ccs:
                 print "\tClosing container with pid:", cc.pid
                 os.kill(cc.pid, signal.SIGTERM)
+                cpid, status = os.waitpid(cc.pid, 0)
+                print "\t==!!!!====!!!====!!!=== CLOSED", cc.pid
 
         cleanup()
 
