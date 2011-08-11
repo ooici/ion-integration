@@ -37,7 +37,7 @@ class Bootlevel10ReadyTest(ItvTestCase):
         p = Process()
         yield p.spawn()
 
-        for servicename in ['java_agent_wrapper']:
+        for servicename in ['java_agent_wrapper', 'ingestion']:
             (content, headers, msg) = yield p.rpc_send(p.get_scoped_name('system', servicename), 'ping', {})
             # if timeout, will just fail the test
 

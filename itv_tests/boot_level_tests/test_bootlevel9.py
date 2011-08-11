@@ -36,7 +36,7 @@ class Bootlevel9ReadyTest(ItvTestCase):
         p = Process()
         yield p.spawn()
 
-        for servicename in ['ingestion','notification_alert','store_service','cdm_validation_service','app_integration']:
+        for servicename in ['notification_alert','cdm_validation_service','app_integration']:
             (content, headers, msg) = yield p.rpc_send(p.get_scoped_name('system', servicename), 'ping', {})
             # if timeout, will just fail the test
 

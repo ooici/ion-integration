@@ -1,0 +1,28 @@
+[
+
+# SLIM DEPLOYMENT FILE
+# last revision: 11 Aug 2011
+# ONLY ONE OF EACH SERVICE THROUGH 10
+
+# BOOTLEVEL 4
+("res/deploy/bootlevel4.rel","id=1,do-init=True"),
+
+# BOOTLEVEL 5
+("res/deploy/bootlevel5.rel","id=9"),
+
+# BOOTLEVEL 6
+("res/deploy/bootlevel6.rel","id=11"),
+
+# BOOTLEVEL 7
+("res/deploy/bootlevel7.rel","id=12"),
+
+# BOOTLEVEL 8
+("res/deploy/bootlevel8.rel","id=14,do-init=True"),
+
+# BOOTLEVEL 9
+("res/deploy/bootlevel9.rel","id=16"),
+
+# BOOTLEVEL 10
+("res/deploy/bootlevel10.rel","id=24"),
+
+]

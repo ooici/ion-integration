@@ -33,7 +33,7 @@ class Bootlevel5ReadyTest(ItvTestCase):
         p = Process()
         yield p.spawn()
 
-        for servicename in ['exchange_management']: #, 'cassandra_manager_agent']:
+        for servicename in ['resource_registry']:
             (content, headers, msg) = yield p.rpc_send(p.get_scoped_name('system', servicename), 'ping', {})
             # if timeout, will just fail the test
 

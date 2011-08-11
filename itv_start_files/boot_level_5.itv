@@ -3,8 +3,6 @@
 # Select the number of instances of the level five services to run...
 
 ("res/deploy/bootlevel5.rel","id=1"),
-
-# Do not start more than one of the these - the EMS holds state and will break!
 #("res/deploy/bootlevel5.rel","id=2"),
 #("res/deploy/bootlevel5.rel","id=3"),
 #("res/deploy/bootlevel5.rel","id=4"),

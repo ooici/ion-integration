@@ -1,0 +1,64 @@
+[
+
+# FULL DEPLOYMENT FILE
+# last revision: 11 Aug 2011
+# .itv cannot simulate putting multiple services in single VMs, so we just replicate the full number
+
+# BOOTLEVEL 4
+# 4 VMs with 2 instances of Datastore on each and 1 instance of Association on each
+#
+("res/deploy/bootlevel4.rel","id=1,do-init=True"),
+("res/deploy/bootlevel4.rel","id=2,do-init=False"),
+("res/deploy/bootlevel4.rel","id=3,do-init=False"),
+("res/deploy/bootlevel4.rel","id=4,do-init=False"),
+("res/apps/datastore.app", "id=5,do-init=False"),
+("res/apps/datastore.app", "id=6,do-init=False"),
+("res/apps/datastore.app", "id=7,do-init=False"),
+("res/apps/datastore.app", "id=8,do-init=False"),
+
+# BOOTLEVEL 5
+# 2 VMs with 1 instance of Resource Registry on each
+
+("res/deploy/bootlevel5.rel","id=9"),
+("res/deploy/bootlevel5.rel","id=10"),
+
+# BOOTLEVEL 6
+# 1 VM with 1 instance of Scheduler
+
+("res/deploy/bootlevel6.rel","id=11"),
+
+# BOOTLEVEL 7
+# 2 VMs with 1 instance of Identity Registry on each
+
+("res/deploy/bootlevel7.rel","id=12"),
+("res/deploy/bootlevel7.rel","id=13"),
+
+# BOOTLEVEL 8
+# 2 VMs with 1 instance of Dataset Controller on each
+("res/deploy/bootlevel8.rel","id=14,do-init=True"),
+("res/deploy/bootlevel8.rel","id=15,do-init=False"),
+
+# BOOTLEVEL 9
+#  2 VMs with 4 instances of App Integration on each, 1 instance of Notification on each, and 1 instances of CDM Validation on each
+
+("res/deploy/bootlevel9.rel","id=16"),
+("res/deploy/bootlevel9.rel","id=17"),
+("res/apps/app_integration.app", "id=18"),
+("res/apps/app_integration.app", "id=19"),
+("res/apps/app_integration.app", "id=20"),
+("res/apps/app_integration.app", "id=21"),
+("res/apps/app_integration.app", "id=22"),
+("res/apps/app_integration.app", "id=23"),
+
+# BOOTLEVEL 10
+# 4 VMs with 2 instances of EOI agent on each and 2 instances of Ingestion on each
+("res/deploy/bootlevel10.rel","id=24"),
+("res/deploy/bootlevel10.rel","id=25"),
+("res/deploy/bootlevel10.rel","id=26"),
+("res/deploy/bootlevel10.rel","id=27"),
+("res/deploy/bootlevel10.rel","id=28"),
+("res/deploy/bootlevel10.rel","id=29"),
+("res/deploy/bootlevel10.rel","id=30"),
+("res/deploy/bootlevel10.rel","id=31"),
+
+]

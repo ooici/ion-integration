@@ -9,6 +9,9 @@
         {'name':'ccagent',              'version':'0.1',
         },
 
+        {'name':'ingestion',    'version':'0.1',
+
+        },
 
         {'name':'eoiagents',    'version':'0.1',
         },
