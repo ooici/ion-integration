@@ -136,17 +136,17 @@ class IntTestAisValidateDataResource(ItvTestCase):
     @defer.inlineCallbacks
     def test_validateDataResourcePositive_local1(self):
         res = yield self._validateDataResourcePositive("http://thredds.oceanobservatories.org/thredds/dodsC/cfcheckData/OS_WHOTS_2010_R_M-1.nc")
-        self.failunlessEqual(res.title, "WHOTS 7 near-real-time Mooring Data, System 1")
+        self.failUnlessEqual(res.title, "WHOTS 7 near-real-time Mooring Data, System 1")
 
     @defer.inlineCallbacks
     def test_validateDataResourcePositive_local2(self):
         res = yield self._validateDataResourcePositive("http://thredds.oceanobservatories.org/thredds/dodsC/cfcheckData/OS_NTAS_2010_R_M-1.nc")
-        self.failunlessEqual(res.title, "NTAS 10 Real-time Mooring Data, System 1")
+        self.failUnlessEqual(res.title, "NTAS 10 Real-time Mooring Data, System 1")
 
     @defer.inlineCallbacks
     def test_validateDataResourcePositive_local3(self):
         yield self._validateDataResourcePositive("http://thredds.oceanobservatories.org/thredds/dodsC/cfcheckData/bigbight.nc")
-        #self.failunlessEqual(res.title, "")
+        #self.failUnlessEqual(res.title, "")
 
     @defer.inlineCallbacks
     def test_validateDataResourceNegative_remote1(self):
