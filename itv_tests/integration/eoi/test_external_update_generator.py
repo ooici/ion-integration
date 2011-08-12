@@ -6,6 +6,8 @@
 """
 
 from twisted.internet import defer
+from twisted.trial import unittest
+import os, os.path, tempfile
 
 from ion.core.data.cassandra_bootstrap import CassandraSchemaProvider
 from ion.core.process.process import Process
@@ -15,6 +17,7 @@ from ion.services.dm.distribution.events import ScheduleEventSubscriber
 from ion.services.dm.scheduler.scheduler_service import SchedulerServiceClient, SchedulerService
 from ion.core.data import storage_configuration_utility
 from ion.core.data.storage_configuration_utility import STORAGE_PROVIDER, PERSISTENT_ARCHIVE
+from ion.util.os_process import OSProcess
 
 from iontest.iontest import IonTestCase
 import ion.util.ionlog
@@ -42,6 +45,16 @@ class ExternalUpdateTest(IonTestCase):
     def setUp(self):
         self.timeout = 10
 
+        # we need ioncore-java-runnables
+        # get around that trial_temp dir, and no don't use adjust_dir, doesn't matter here, this is always a test
+        self.bin_dir = os.path.join("..", "..", "ioncore-java-runnables")
+
+        if not os.path.exists(self.bin_dir):
+            raise unittest.SkipTest("could not find ioncore-java-runnables at %s" % self.bin_gen)
+
+        self.java = os.path.join("/usr", "bin", "java")
+        if not os.path.exists(self.java):
+            raise unittest.SkipTest("could not find java at %s" % self.java)
 
         yield self._start_container()
 
@@ -53,19 +66,18 @@ class ExternalUpdateTest(IonTestCase):
         self.sub = ScheduleEventSubscriber(process=self.proc,
                                            origin=SCHEDULE_TYPE_PERFORM_INGESTION_UPDATE)
 
-        # you can not keep the received message around after the ondata callback is complete
-        self.sub.ondata = lambda c: self._notices.append(c['content'].additional_data.payload.dataset_id)
+        self._def_notice_received = defer.Deferred()
 
-        # normally we'd register before initialize/activate but let's not bring the PSC/EMS into the mix
-        # if we can avoid it.
+        # you can not keep the received message around after the ondata callback is complete
+        def datame(c):
+            self._notices.append(c['content'].additional_data.payload.dataset_id)
+            self._def_notice_received.callback(True)
+
+        self.sub.ondata = datame
+        #yield self.proc.register_life_cycle_object(self.sub)
         yield self.sub.initialize()
         yield self.sub.activate()
 
-    def _get_spawn_args(self):
-        """
-        Override this in derived tests for Cassandra setup for services, etc.
-        """
-        return {}
 
     @defer.inlineCallbacks
     def tearDown(self):
@@ -76,13 +88,27 @@ class ExternalUpdateTest(IonTestCase):
 
     @defer.inlineCallbacks
     def test_external_event(self):
-        # Create clients
 
+        # create a temporary ooici-conn.properties file
+        tf = tempfile.NamedTemporaryFile()
 
-        # @TODO use twisted process spawn to run the java update event generator.
+        propstempl = '''
+ion.host=%s
+ion.sysname=%s
+ion.event_exchange=events.topic
+ion.update_event_topic=2001.1001
+'''
+        exp = propstempl % (ioninit.container_instance.exchange_manager.exchange_space.message_space.hostname,
+                            ioninit.sys_name)
 
+        tf.write(exp)
 
-        yield asleep(3)
-        #cc = yield self.client.get_count()
-        #self.failUnless(int(cc['value']) >= 1)
-        self.failUnless(len(self._notices) == 1, "this may fail intermittently due to messaging")
+        osp = OSProcess(binary=self.java, spawnargs=["-cp", ".:*:lib/*", 'ion.integration.eoi.UpdateEventGenerator', 'fake-dataset-id'], startdir=self.bin_dir)
+
+        yield osp.spawn()
+        tf.close()
+
+        yield self._def_notice_received
+
+        self.failUnless(len(self._notices) == 1, "Did not see the message - check your sysname/env")
+
