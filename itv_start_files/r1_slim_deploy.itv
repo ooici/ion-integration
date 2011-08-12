@@ -25,4 +25,7 @@
 # BOOTLEVEL 10
 ("res/deploy/bootlevel10.rel","id=24"),
 
+# BOOTLEVEL 11
+("res/deploy/bootlevel11.rel","id=32"),
+
 ]

@@ -61,4 +61,8 @@
 ("res/deploy/bootlevel10.rel","id=30"),
 ("res/deploy/bootlevel10.rel","id=31"),
 
+# BOOTLEVEL 11
+# 1 VM with 1 instance of Instrument Integration, 1 instance of Event Monitor, and 1 instance of Instrument Web Monitor
+("res/deploy/bootlevel11.rel","id=32"),
+
 ]
