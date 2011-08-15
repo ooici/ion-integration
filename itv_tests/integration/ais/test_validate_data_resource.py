@@ -229,8 +229,10 @@ class IntTestAisValidateDataResource(ItvTestCase):
         if response_msg.MessageType == AIS_RESPONSE_ERROR_TYPE:
             log.info("\n\n\n\n&&&&&&&&&&&&&&&&\n\n" + response_msg.error_str + "\n\n&&&&&&&&&&\n\n")
 
+            refused = "Connection was refused by other side: 111: Connection refused. "
             bad_cdm = "Your system doesn't seem to have the CDM validation service configured properly"
             bad_cfc = "Your system doesn't seem to have the CF Checker configured properly"
+            not_dap = "the dataset is not hosted on a DAP server and cannot be validated"
             innerex = ""
             extra   = ""
 
@@ -242,9 +244,17 @@ class IntTestAisValidateDataResource(ItvTestCase):
                 if -1 < endpos:
                     innerex = " (" + response_msg.error_str[pos + len(tmp):endpos] + ") "
 
+
+            if -1 < response_msg.error_str.find(not_dap):
+                raise unittest.SkipTest("Apparently " + not_dap + " (" + url + "). " + 
+                                        "This could be due to a temporary server outage.")
+
             if -1 < response_msg.error_str.find("Could not perform CDM Validation.  " +
                                                 "Please check the CDM Validator configuration."):
-                raise unittest.SkipTest(bad_cdm + innerex + " for " + url)
+                if -1 < response_msg.error_str.find(refused):
+                    raise unittest.SkipTest("Could not validate because connection was refused by " + url)
+                else:
+                    raise unittest.SkipTest(bad_cdm + innerex + " for " + url)
 
             if -1 < response_msg.error_str.find("Could not perform CF Validation.  " +
                                                 "Please check the CF Checker configuration.  " +
