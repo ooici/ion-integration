@@ -95,6 +95,7 @@ def get_opts():
     p.add_option("--debug-cc",        action="store_true",dest="debug_cc", help="If specified, instead of running trial, drops you into a CC shell after starting apps.")
     p.add_option("--launcher",        action="store_true",dest="launcher", help="If specified, runs all dependent containers but does not run a trial test or a CC shell.")
     p.add_option("--wrap-twisted-bin",action="store",     dest="wrapbin",  help="Wrap calls to start twisted containers for dependencies in this specified binary. i.e. profiler, valgrind, etc.")
+    p.add_option("--wrap-trial-bin",action="store",     dest="wraptrial", help="Wrap calls to start trial run for dependencies in this specified binary. i.e. coverage.")
     p.add_option("--trial-args",      action="store",     dest="trialargs",help="Arguments passed in to trial, i.e. -u or --coverage")
     p.add_option("--no-busy",         action="store_true",dest="no_busy", help="Set the ION_NO_BUSYLOOP_DETECT env variable so that busy loop detection does not run.")
     p.set_defaults(sysname=gen_sysname(), hostname="localhost", debug=False, debug_cc=False, trialargs=None, no_busy=False, launcher=False)  # make up a new random sysname
@@ -446,7 +447,11 @@ def main():
                 if targs is not None:
                     trialargs = targs.split(" ") + trialargs    # insert args to trial, split on spaces so it recognizes multiples.
 
-                os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
+                if opts.wraptrial is not None:
+                    wraptrial = opts.wraptrial.split(" ")
+                    os.execve(wraptrial[0], wraptrial + ["bin/trial"] + trialargs, newenv)
+                else:
+                    os.execve("bin/trial", ["bin/trial"] + trialargs, newenv)
 
         def cleanup():
             print "Cleaning up app_dependencies..."
