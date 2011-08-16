@@ -446,7 +446,12 @@ def main():
                 targs = opts.trialargs
                 if targs is not None:
                     trialargs = targs.split(" ") + trialargs    # insert args to trial, split on spaces so it recognizes multiples.
-
+                
+                # If running coverage, make sure each run of coverage goes
+                # to a different coverage file name so they don't overwrite
+                if newenv.get('COVERAGE_RUN', None) is not None:
+                    newenv['COVERAGE_FILE'] = '.coverage.%s' % '.'.join([x.__name__ for x in testclass]) 
+                
                 if opts.wraptrial is not None:
                     wraptrial = opts.wraptrial.split(" ")
                     os.execve(wraptrial[0], wraptrial + ["bin/trial"] + trialargs, newenv)
