@@ -125,11 +125,12 @@ class IntTestIngest(ItvTestCase):
 
 
         # Just create it - the workbench/datastore will take care of the rest!
-        asssociation = yield self.ac.create_association(datasource, HAS_A_ID,  dataset)
+        association = yield self.ac.create_association(datasource, HAS_A_ID,  dataset)
 
         yield self.rc.put_resource_transaction([dataset, datasource])
 
-
+        # Not sure why this is needed but it works...
+        datasource.Repository.persistent = True
         #log.debug(dataset.ResourceObject.Debug())
 
         log.info('Created dataset and datasource for testing')
@@ -146,8 +147,6 @@ class IntTestIngest(ItvTestCase):
         log.info('Created subscriber to listen for test results')
 
         yield call_jaw(dataset.ResourceIdentity, datasource.ResourceIdentity)
-
-
 
         datasource_id = yield test_deferred
 
