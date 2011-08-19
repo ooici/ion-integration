@@ -168,7 +168,7 @@ def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, sh
     
     # if specified, wrap the twisted container spawn in this exec
     if opts.wrapbin and not shell:
-        sargs.insert(0, opts.wrapbin)
+        sargs = opts.wrapbin.split(" ") + sargs
     
     return sargs
 
@@ -319,6 +319,9 @@ def main():
                 # Ignore the SIGINT signal by setting the handler to the standard
                 # signal handler SIG_IGN.
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+            if newenv.get('COVERAGE_RUN', None) is not None:
+                newenv['COVERAGE_FILE'] = '.coverage.cc-%s' % (str(uniqueid)) 
 
             # spawn container
             po = subprocess.Popen(sargs, env=newenv, preexec_fn=squelch_int)
