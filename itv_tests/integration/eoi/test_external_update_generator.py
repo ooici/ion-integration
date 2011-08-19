@@ -50,7 +50,7 @@ class ExternalUpdateTest(IonTestCase):
         self.bin_dir = os.path.join("..", "..", "ioncore-java-runnables")
 
         if not os.path.exists(self.bin_dir):
-            raise unittest.SkipTest("could not find ioncore-java-runnables at %s" % self.bin_gen)
+            raise unittest.SkipTest("could not find ioncore-java-runnables at %s" % self.bin_dir)
 
         self.java = os.path.join("/usr", "bin", "java")
         if not os.path.exists(self.java):
