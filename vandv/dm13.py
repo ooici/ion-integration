@@ -15,7 +15,7 @@ from ion.ops.resources import print_dataset_history
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
-class VVDM21(VVBase):
+class VVDM13(VVBase):
     """
 
     [Demonstration]
@@ -49,7 +49,7 @@ class VVDM21(VVBase):
         self._mo = InteractionObserver()
         yield self._mo.spawn()
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm21_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm13_proc'})
         yield self._proc.spawn()
 
         # supplement added subscriber - we yield on updates here
@@ -80,7 +80,7 @@ class VVDM21(VVBase):
     def _ingest_dataset(self):
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm8", "ndbc_sos-44014_winds.dsreg")])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm13", "ndbc_sos-44014_winds.dsreg")])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
