@@ -8,7 +8,7 @@ from ion.interact.int_observer import InteractionObserver
 from ion.util.os_process import OSProcess
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
 
-class VVDM13(VVBase):
+class VVDM17(VVBase):
     """
     
     """
@@ -57,7 +57,7 @@ class VVDM13(VVBase):
     def _ingest_dataset(self, dsregfile):
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm13", dsregfile)])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm17", dsregfile)])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
