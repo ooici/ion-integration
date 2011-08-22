@@ -10,9 +10,9 @@ from ion.util.os_process import OSProcess
 from ion.core.object import object_utils
 
 BLOB_TYPE = object_utils.create_type_identifier(object_id=2540, version=1)
-FILENAME = "vandv/dm18/MIT_Concert_Choir_-_01_-_O_Fortuna.mp3"
+FILENAME = "vandv/dm11/MIT_Concert_Choir_-_01_-_O_Fortuna.mp3"
 
-class VVDM18(VVBase):
+class VVDM11(VVBase):
     """
     [Demonstration] The persistent archive services shall be data format agnostic
     """
@@ -24,7 +24,7 @@ class VVDM18(VVBase):
         self._first_run = yield self._start_itv(files=["itv_start_files/boot_level_4_local.itv"])
 
         # anon process
-        self._proc = Process(spawnargs={'process-name':'VVDM18'})
+        self._proc = Process(spawnargs={'process-name':'VVDM11'})
         yield self._proc.spawn()
 
         self._rc = ResourceClient(proc=self._proc)
@@ -35,7 +35,7 @@ class VVDM18(VVBase):
         1. Play source MP3 and show md5sum/ls
         """
 
-        osp = OSProcess("/bin/ls", spawnargs=["-l", "vandv/dm18"])
+        osp = OSProcess("/bin/ls", spawnargs=["-l", "vandv/dm11"])
         lso = yield osp.spawn()
 
         print "FILE:", "\n".join(lso['outlines'])
