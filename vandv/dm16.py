@@ -22,11 +22,10 @@ from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
 
-class VVDM12(VVBase):
+class VVDM16(VVBase):
     """
     [Test] The data catalog services shall be capable of adding metadata attributes
     Implemented using the resource registry and the common data model for science dataset resources.
-    Likely basis for DM11 and DM 22 as well!
     """
 
     @defer.inlineCallbacks
@@ -92,7 +91,7 @@ class VVDM12(VVBase):
         self.attr = attr
 
         repo = self.dset.Repository
-        repo.commit('Commiting dataset changes for VV DM12 step 2')
+        repo.commit('Commiting dataset changes for VV DM16 step 2')
 
         print '==== New Attribute ID and Content: ===='
         print '= Attribute CASRef: %s' % sha1_to_hex(self.attr.MyId)
