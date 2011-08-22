@@ -10,7 +10,7 @@ from ion.services.coi.resource_registry.resource_client import ResourceClient
 from ion.util.os_process import OSProcess, OSProcessError
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
 
-class VVDM19(VVBase):
+class VVDM20(VVBase):
     """
     [Test] The persistent archive services shall preserve all associations between data and metadata.
     """
@@ -28,7 +28,7 @@ class VVDM19(VVBase):
                                                        "itv_start_files/boot_level_10.itv"])
 
         # anon process
-        self._proc = Process(spawnargs={'process-name':'VVDM19'})
+        self._proc = Process(spawnargs={'process-name':'VVDM20'})
         yield self._proc.spawn()
 
         # supplement added subscriber - we yield on updates here
@@ -54,7 +54,7 @@ class VVDM19(VVBase):
     def _ingest_dataset(self):
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm19", "ndbc_sos-44014_winds.dsreg")])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm20", "ndbc_sos-44014_winds.dsreg")])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
