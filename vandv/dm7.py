@@ -12,7 +12,7 @@ from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubsc
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
-class VVDM8(VVBase):
+class VVDM7(VVBase):
     """
     [Demonstration] The dynamic data distribution services shall support 
                     multiple data messages on a given data stream.
@@ -32,7 +32,7 @@ class VVDM8(VVBase):
                                      "itv_start_files/boot_level_9.itv",
                                      "itv_start_files/4x_boot_level_10.itv"])
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm8_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm7_proc'})
         yield self._proc.spawn()
 
         # supplement added subscriber - we yield on updates here
@@ -63,7 +63,7 @@ class VVDM8(VVBase):
     def _ingest_dataset(self):
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm8", "ndbc_sos-44014_winds.dsreg")])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm7", "ndbc_sos-44014_winds.dsreg")])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
