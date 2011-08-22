@@ -16,7 +16,7 @@ log = ion.util.ionlog.getLogger(__name__)
 
 CDM_BOUNDED_ARRAY_TYPE = create_type_identifier(object_id=10021, version=1)
 
-class VVDM11(VVBase):
+class VVDM15(VVBase):
     """
     [Test] The data catalog services shall permanently associate metadata with all cataloged data
     """
@@ -33,7 +33,7 @@ class VVDM11(VVBase):
                                                        "itv_start_files/boot_level_9.itv",
                                                        "itv_start_files/boot_level_10.itv"])
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm11_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm15_proc'})
         yield self._proc.spawn()
 
         self._rc = ResourceClient(proc=self._proc)
@@ -71,7 +71,7 @@ class VVDM11(VVBase):
         """
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm22", "ndbc_sos-44014_winds.dsreg")])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm15", "ndbc_sos-44014_winds.dsreg")])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
@@ -82,6 +82,7 @@ class VVDM11(VVBase):
                     self._dataset_id = dsid.strip().strip("\"")
                     break
 
+        print 'Waiting for supplement added event:'
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
 
@@ -161,6 +162,7 @@ class VVDM11(VVBase):
         dsreg = OSProcess(binary=os.path.join(ijr, 'generate_update_event'), startdir=ijr, spawnargs=[self._dataset_id])
         yield dsreg.spawn()
 
+        print 'Waiting for supplement added event:'
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
         yield self._print_cur_ds_state()
@@ -174,6 +176,7 @@ class VVDM11(VVBase):
         dsreg = OSProcess(binary=os.path.join(ijr, 'generate_update_event'), startdir=ijr, spawnargs=[self._dataset_id])
         yield dsreg.spawn()
 
+        print 'Waiting for supplement added event:'
         yield self._def_sup_added
         self._def_sup_added = defer.Deferred()
         yield self._print_cur_ds_state()
