@@ -15,22 +15,20 @@ from ion.ops.resources import print_dataset_history
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
-class VVDM13(VVBase):
+class VVDM12(VVBase):
     """
 
     [Demonstration]
-    The persistent archive services shall support distributed data
-    repositories
+    L4-DM-RQ-82 The persistent archive services shall support distributed data repositories
 
     Deploy multiple redundant instances of Cassandra as a cluster in the cloud
-  
     Ingest and retrieve a data resource
-
-    Kill one instance of Cassandra
-  
+    Kill one instance in the Cassandra cluster
     Ingest and retrieve the same data resource
+    Kill several instances in the Cassandra cluster
+    Show that retrieving a data resource fails
 
-                
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+12
     """
 
     @defer.inlineCallbacks
@@ -49,7 +47,7 @@ class VVDM13(VVBase):
         self._mo = InteractionObserver()
         yield self._mo.spawn()
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm13_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm12_proc'})
         yield self._proc.spawn()
 
         # supplement added subscriber - we yield on updates here
@@ -80,7 +78,7 @@ class VVDM13(VVBase):
     def _ingest_dataset(self):
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm13", "ndbc_sos-44014_winds.dsreg")])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm12", "ndbc_sos-44014_winds.dsreg")])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
