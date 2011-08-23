@@ -16,9 +16,12 @@ log = ion.util.ionlog.getLogger(__name__)
 
 CDM_BOUNDED_ARRAY_TYPE = create_type_identifier(object_id=10021, version=1)
 
-class VVDM15(VVBase):
+class VVDM14(VVBase):
     """
-    [Test] The data catalog services shall permanently associate metadata with all cataloged data
+    [Test]
+    L4-DM-RQ-132 The data catalog services shall permanently associate metadata with all cataloged data
+    L4-CI-DM-RQ-84 The persistent archive services shall support data versioning
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+14
     """
 
     @defer.inlineCallbacks
@@ -33,7 +36,7 @@ class VVDM15(VVBase):
                                                        "itv_start_files/boot_level_9.itv",
                                                        "itv_start_files/boot_level_10.itv"])
 
-        self._proc = Process(spawnargs={'proc-name':'vvdm15_proc'})
+        self._proc = Process(spawnargs={'proc-name':'vvdm14_proc'})
         yield self._proc.spawn()
 
         self._rc = ResourceClient(proc=self._proc)
@@ -71,7 +74,7 @@ class VVDM15(VVBase):
         """
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm15", "ndbc_sos-44014_winds.dsreg")])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm14", "ndbc_sos-44014_winds.dsreg")])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
