@@ -12,7 +12,9 @@ from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubsc
 
 class VVDM20(VVBase):
     """
-    [Test] The persistent archive services shall preserve all associations between data and metadata.
+    [Test]
+    L4-CI-DM-RQ-79 The persistent archive services shall preserve all associations between data and metadata
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+20
     """
 
     @defer.inlineCallbacks
