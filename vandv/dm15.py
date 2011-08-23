@@ -22,9 +22,12 @@ from ion.core import ioninit
 CONF = ioninit.config(__name__)
 
 
-class VVDM16(VVBase):
+class VVDM15(VVBase):
     """
-    [Test] The data catalog services shall be capable of adding metadata attributes
+    [Test]
+    L4-DM-RQ-158 The data catalog services shall be capable of adding metadata attributes
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+15
+    
     Implemented using the resource registry and the common data model for science dataset resources.
     """
 
@@ -91,7 +94,7 @@ class VVDM16(VVBase):
         self.attr = attr
 
         repo = self.dset.Repository
-        repo.commit('Commiting dataset changes for VV DM16 step 2')
+        repo.commit('Commiting dataset changes for VV DM15 step 2')
 
         print '==== New Attribute ID and Content: ===='
         print '= Attribute CASRef: %s' % sha1_to_hex(self.attr.MyId)
