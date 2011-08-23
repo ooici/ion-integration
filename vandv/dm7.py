@@ -14,10 +14,11 @@ log = ion.util.ionlog.getLogger(__name__)
 
 class VVDM7(VVBase):
     """
-    [Demonstration] The dynamic data distribution services shall support 
-                    multiple data messages on a given data stream.
-    [Demonstration] The dynamic data distribution services shall associate
-                    data streams with data resources.
+    [Demonstration]
+    L4-CI-DM-RQ-182 The dynamic data distribution services shall support multiple data messages on a given data stream
+    L4-CI-DM-RQ-180 The dynamic data distribution services shall associate data streams with data resources
+    L4-CI-DM-RQ-186 The data ingestion services shall be capable of linking to topics
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+7
     """
 
     @defer.inlineCallbacks
