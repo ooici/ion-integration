@@ -16,6 +16,7 @@ class VVDM10(VVBase):
     """
     [Demonstration]
     L4-DM-RQ-77 The persistent archive services shall be data format agnostic
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+10
     """
 
     @defer.inlineCallbacks
