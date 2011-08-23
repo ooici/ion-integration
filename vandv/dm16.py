@@ -8,9 +8,11 @@ from ion.interact.int_observer import InteractionObserver
 from ion.util.os_process import OSProcess
 from ion.services.dm.distribution.events import DatasetSupplementAddedEventSubscriber, IngestionProcessingEventSubscriber
 
-class VVDM17(VVBase):
+class VVDM16(VVBase):
     """
-    
+    [TEST]
+    L4-DM-RQ-183 The data ingestion services shall manage ingestion of a data set
+    https://confluence.oceanobservatories.org/display/syseng/R1+DM+Verification+Procedure+16
     """
 
     @defer.inlineCallbacks
@@ -57,7 +59,7 @@ class VVDM17(VVBase):
     def _ingest_dataset(self, dsregfile):
 
         ijr = os.path.join(os.getcwd().rsplit("/", 1)[0], 'ioncore-java-runnables')
-        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm17", dsregfile)])
+        dsreg = OSProcess(binary=os.path.join(ijr, 'dataset_registration'), startdir=ijr, spawnargs=[os.path.join(os.getcwd(), "vandv", "dm16", dsregfile)])
         fin = yield dsreg.spawn()
 
         # pull out dataset id
