@@ -128,6 +128,7 @@ class IntTestAisValidateDataResource(ItvTestCase):
 
     @defer.inlineCallbacks
     def test_validateDataResourcePositive_remote3(self):
+        raise unittest.SkipTest("http://hfrnet.ucsd.edu:8080 hangs during connection, so this test has been administratively skipped")
         res = yield self._validateDataResourcePositive("http://hfrnet.ucsd.edu:8080/thredds/dodsC/HFRNet/USEGC/6km/hourly/RTV")
 
         self.failUnlessEqual(res.title, "Near-Real Time Surface Ocean Velocity")
