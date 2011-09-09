@@ -30,6 +30,9 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'setup-py-proto-equal': "'ionproto==%(major)s.%(minor)s.%(micro)s',"
     , 'setup-py-proto-greater': "'ionproto>=%(major)s.%(minor)s.%(micro)s',"
     , 'dev-cfg-equal': 'ionproto=%(major)s.%(minor)s.%(micro)s'
+    , 'epu-setup-py': "'version' : '%(major)s.%(minor)s.%(micro)s',"
+    , 'epuagent-setup-py': "'version' : '%(major)s.%(minor)s.%(micro)s',"
+    , 'epumgmt-setup-py': 'version = "%(major)s.%(minor)s.%(micro)s"'
 }
 
 
@@ -96,7 +99,6 @@ def _replaceVersionInFile(filename, matchRe, template, versionCb):
 
     if currentVersionStr is None:
         abort('Version not found in %s.' % (filename))
-
     version = versionCb(currentVersionStr)
     nextVersionStr = '%s%s%s' % (indent, template % version, linesep)
 
@@ -125,13 +127,12 @@ def _ensureClean(default_branch='develop'):
 
     local('git fetch --tags')
 
-def _gitTag(version):
+def _gitTag(version, branch='develop'):
     with hide('running', 'stdout', 'stderr'):
         remotes = local('git remote', capture=True).split()
         if len(remotes) == 0:
             abort('You have no configured git remotes.')
 
-    branch = 'develop'
     remote = ('origin' if 'origin' in remotes else
               'ooici' if 'ooici' in remotes else
               'ooici-eoi' if 'ooici-eoi' in remotes else
@@ -204,7 +205,8 @@ This script assumes you are in an "ion-integration" repo clone, which is a sibli
 
 Prerequisites:
  1) You should not have any local modifications in the repo you wish to release.
- 2) You should be on the "develop" branch.
+ 2) You should be on the main line branch, i.e., "develop" or "master"
+ branch depending on your project.
  3) You should already be at the exact commit that you want to release as a new version.
  4) You should have already updated your dependent versions in config files and committed (at least locally).
 -------------------------------------------------------------------------------------------------------------
@@ -255,6 +257,37 @@ def python():
         local('git push %s %s' % (remote, branch))
 
         #_gitForwardMaster(remote)
+
+def epu():
+    versionRe = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
+    _release_python('epu', versionRe, 'epu-setup-py', 'master')
+
+def epuagent():
+    versionRe = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
+    _release_python('epuagent', versionRe, 'epuagent-setup-py', 'master')
+
+def epumgmt():
+    versionRe = re.compile('(?P<indent>\s*)version = "(?P<version>[^\s]+)"')
+    _release_python('epumgmt', versionRe, 'epumgmt-setup-py', 'master')
+
+def _release_python(project, versionRe, versionTemplate, default_branch):
+    with lcd(os.path.join('..', project )):
+
+        _showIntro()
+        _ensureClean(default_branch=default_branch)
+
+        with hide('running', 'stdout', 'stderr'):
+            currentVersionStr = local('python setup.py --version', capture=True)
+
+        version = _getNextVersion(currentVersionStr)
+        _replaceVersionInFile('setup.py', versionRe,
+                versionTemplates[versionTemplate], lambda new: version)
+
+        local('python setup.py sdist')
+        local('chmod -R 775 dist')
+        _deploy('dist/*.tar.gz')
+
+        remote = _gitTag(version, branch=default_branch)
 
 class JavaVersion(object):
     def __init__(self):
