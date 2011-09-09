@@ -104,13 +104,14 @@ def _replaceVersionInFile(filename, matchRe, template, versionCb):
     with open(filename, 'w') as wfile:
         wfile.writelines(lines)
 
-branchNameRe = re.compile('develop(\\^[0-9]+)?$')
-def _ensureClean():
+# branchNameRe = re.compile('develop(\\^[0-9]+)?$')
+def _ensureClean(default_branch='develop'):
     with hide('running', 'stdout', 'stderr'):
-        branch = local('git name-rev --name-only HEAD', capture=True)
-        if not branchNameRe.match(branch):
-            abort('You must be in the "develop" branch (you are in "%s").' % (branch))
-
+        branch = local('git symbolic-ref HEAD 2>/dev/null || echo unamed branch',
+                capture=True).split('/')[-1]
+        if default_branch != branch:
+            abort('You must be in the %s branch of dir %s. (you are in "%s").' 
+                    % (default_branch, local('pwd',capture=True), branch))
         changes = local('git status -s --untracked-files=no', capture=True)
 
     clean = (len(changes) == 0)
@@ -190,7 +191,7 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
     local('ssh %s@%s chmod 775 %s || exit 0' % (scpUser, host, relFileStr))
     local('ssh %s@%s chgrp teamlead %s || exit 0' % (scpUser, host, relFileStr))
-
+    
 def _showIntro():
     print '''
 -------------------------------------------------------------------------------------------------------------
@@ -213,6 +214,12 @@ setupProtoRe = re.compile("(?P<indent>\s*)'ionproto[><=]=(?P<version>[^']+)'")
 devProtoRe = re.compile('(?P<indent>\s*)ionproto[><=]?=(?P<version>.+)')
 def python():
     with lcd(os.path.join('..', 'ion-object-definitions', 'python')):
+        with hide('running', 'stdout', 'stderr'):
+            branch = local('git symbolic-ref HEAD 2>/dev/null || echo unamed branch',
+                    capture=True).split('/')[-1]
+            if branch != 'develop' :
+                abort('You must be in the "develop" branch of dir %s (you are in "%s").' 
+                        % (local('pwd', capture=True), branch))
         protoVersion = local('python setup.py --version', capture=True).strip()
         protoVersion = _validateVersion(protoVersion)
 
