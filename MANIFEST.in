@@ -1,3 +1,5 @@
 recursive-include itv_trial *
 recursive-include res *
-include README.txt LICENSE.txt Doxyfile bootstrap.py buildout*.cfg
+include README.txt LICENSE.txt Doxyfile
+exclude res/config/ionlocal.config
+exclude res/logging/loglevelslocal.cfg
