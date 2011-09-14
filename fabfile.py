@@ -33,6 +33,7 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'epu-setup-py': "'version' : '%(major)s.%(minor)s.%(micro)s',"
     , 'epuagent-setup-py': "'version' : '%(major)s.%(minor)s.%(micro)s',"
     , 'epumgmt-setup-py': 'version = "%(major)s.%(minor)s.%(micro)s"'
+    , 'ionintegration-setup-py': "version = '%(major)s.%(minor)s.%(micro)s',"
 }
 
 
@@ -269,6 +270,10 @@ def epuagent():
 def epumgmt():
     versionRe = re.compile('(?P<indent>\s*)version = "(?P<version>[^\s]+)"')
     _release_python('epumgmt', versionRe, 'epumgmt-setup-py', 'master')
+
+def ionintegration():
+    versionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
+    _release_python('ion-integration', versionRe, 'ionintegration-setup-py', 'develop')
 
 def _release_python(project, versionRe, versionTemplate, default_branch):
     with lcd(os.path.join('..', project )):
