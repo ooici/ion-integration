@@ -244,6 +244,7 @@ def python():
         _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-equal'], lambda old: protoVersion[0])
         _replaceVersionInFile('development.cfg', devProtoRe, versionTemplates['dev-cfg-equal'], lambda old: protoVersion[0])
 
+        local('rm -rf dist')
         local('python setup.py sdist')
         local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
@@ -288,6 +289,7 @@ def _release_python(project, versionRe, versionTemplate, default_branch):
         _replaceVersionInFile('setup.py', versionRe,
                 versionTemplates[versionTemplate], lambda new: version)
 
+        local('rm -rf dist')
         local('python setup.py sdist')
         local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
