@@ -14,7 +14,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(
-    name = 'ionintegration',
+    name = 'ion-integration',
     version = '0.0.1', 
     description = 'OOI ION Integration Tests',
     url = 'http://www.oceanobservatories.org/spaces/display/CIDev/LCAARCH+Development+Project',
