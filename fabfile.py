@@ -128,7 +128,7 @@ def _ensureClean(default_branch='develop'):
 
     local('git fetch --tags')
 
-def _gitTag(version, branch='develop'):
+def _gitTag(version, branch='develop', cloned=False):
     with hide('running', 'stdout', 'stderr'):
         remotes = local('git remote', capture=True).split()
         if len(remotes) == 0:
@@ -138,7 +138,8 @@ def _gitTag(version, branch='develop'):
               'ooici' if 'ooici' in remotes else
               'ooici-eoi' if 'ooici-eoi' in remotes else
               remotes[0])
-    remote = prompt('Please enter the git remote to use:', default=remote)
+    if not cloned:
+        remote = prompt('Please enter the git remote to use:', default=remote)
     if not remote in remotes:
         abort('"%s" is not a configured remote.' % (remote))
 
@@ -194,6 +195,70 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     local('ssh %s@%s chmod 775 %s || exit 0' % (scpUser, host, relFileStr))
     local('ssh %s@%s chgrp teamlead %s || exit 0' % (scpUser, host, relFileStr))
     
+def _add_version(project, versionStr):
+    print 'Preparing to tar up project directory.'
+    local('git clean -f -d')
+    local('git rev-parse HEAD > .gitmessage')
+    local('echo %s-%s > .projectversion' % (project, versionStr))
+    local('rm -rf .git')
+
+def _tar_project_dir(project, versionStr):
+    dirtar = '%s_dir-%s.tar.gz' % (project, versionStr)
+    local('tar czf %s tmpfab_%s' % (dirtar, project)) 
+    print 'Deploying directory tar %s.' % dirtar
+    _deploy(dirtar) 
+    local('rm %s' % dirtar)
+
+def _release_python(version_re, versionTemplate, default_branch):
+    currentVersionStr = local('python setup.py --version', capture=True) 
+    version = _getNextVersion(currentVersionStr)
+    _replaceVersionInFile('setup.py', version_re,
+            versionTemplates[versionTemplate], lambda new: version)
+
+    local('rm -rf dist')
+    local('python setup.py sdist')
+    local('chmod -R 775 dist')
+    _deploy('dist/*.tar.gz')
+    remote = _gitTag(version, branch=default_branch, cloned=True)
+   
+    versionStr = '%d.%d.%d' % (version['major'], version['minor'],
+            version['micro'])
+
+    return versionStr
+
+def _release_dir(default_branch):
+    currentVersionStr = local('cat VERSION.txt', capture=True) 
+    version = _getNextVersion(currentVersionStr)
+    versionStr = '%d.%d.%d' % (version['major'], version['minor'],
+            version['micro'])
+    local('echo %s > VERSION.txt' % versionStr)
+
+    remote = _gitTag(version, branch=default_branch, cloned=True)
+   
+    return versionStr
+
+def _release_cei(project, version_re, versionTemplate, gitUrl,
+        default_branch='master', isPython=True):
+    local('rm -rf ../tmpfab_%s' % project)
+    local('git clone %s ../tmpfab_%s' % (gitUrl, project))
+
+    with lcd(os.path.join('..', 'tmpfab_%s' % project)):
+        branch = prompt('Please enter branch or commit for release point:',
+            default=default_branch)
+        local('git checkout %s' % branch)
+       
+        if isPython:
+            versionStr = _release_python(version_re, versionTemplate, default_branch)
+        else:
+            versionStr = _release_dir(default_branch)
+
+        _add_version(project, versionStr)
+
+    with lcd('..'):
+        _tar_project_dir(project, versionStr)
+
+    local('rm -rf ../tmpfab_%s' % project)
+
 def _showIntro():
     print '''
 -------------------------------------------------------------------------------------------------------------
@@ -260,41 +325,39 @@ def python():
 
         #_gitForwardMaster(remote)
 
+def dtdata():
+    gitUrl = 'git@github.com:ooici/dt-data.git'
+
+    _release_cei('dt-data', 'n/a' , 'n/a', gitUrl, isPython=False)
+
+def launchplans():
+    gitUrl = 'git@github.com:ooici/launch-plans.git'
+
+    _release_cei('launch-plans', 'n/a' , 'n/a', gitUrl, isPython=False)
+
 def epu():
-    versionRe = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
-    _release_python('epu', versionRe, 'epu-setup-py', 'master')
+    gitUrl = 'git@github.com:ooici/epu.git'
+    version_re = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
+    
+    _release_cei('epu', version_re, 'epu-setup-py', gitUrl)
 
 def epuagent():
-    versionRe = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
-    _release_python('epuagent', versionRe, 'epuagent-setup-py', 'master')
+    gitUrl = 'git@github.com:ooici/epuagent.git'
+    version_re = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
+   
+    _release_cei('epuagent', version_re, 'epuagent-setup-py', gitUrl)
 
 def epumgmt():
-    versionRe = re.compile('(?P<indent>\s*)version = "(?P<version>[^\s]+)"')
-    _release_python('epumgmt', versionRe, 'epumgmt-setup-py', 'master')
+    gitUrl = 'git://github.com/nimbusproject/epumgmt.git'
+    version_re = re.compile('(?P<indent>\s*)version = "(?P<version>[^\s]+)"')
+    
+    _release_cei('epumgmt', version_re, 'epumgmt-setup-py', gitUrl)
 
 def ionintegration():
-    versionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
-    _release_python('ion-integration', versionRe, 'ionintegration-setup-py', 'develop')
+    gitUrl = 'git@github.com:ooici/ion-integration.git'
+    version_re = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
 
-def _release_python(project, versionRe, versionTemplate, default_branch):
-    with lcd(os.path.join('..', project )):
-
-        _showIntro()
-        _ensureClean(default_branch=default_branch)
-
-        with hide('running', 'stdout', 'stderr'):
-            currentVersionStr = local('python setup.py --version', capture=True)
-
-        version = _getNextVersion(currentVersionStr)
-        _replaceVersionInFile('setup.py', versionRe,
-                versionTemplates[versionTemplate], lambda new: version)
-
-        local('rm -rf dist')
-        local('python setup.py sdist')
-        local('chmod -R 775 dist')
-        _deploy('dist/*.tar.gz')
-
-        remote = _gitTag(version, branch=default_branch)
+    _release_cei('ion-integration', version_re, 'ionintegration-setup-py', gitUrl, default_branch='develop')
 
 class JavaVersion(object):
     def __init__(self):
