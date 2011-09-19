@@ -204,10 +204,9 @@ def _add_version(project, versionStr):
 
 def _tar_project_dir(project, versionStr):
     dirtar = '%s_dir-%s.tar.gz' % (project, versionStr)
-    local('tar czf %s tmpfab_%s' % (dirtar, project)) 
+    local('tar czf %s %s' % (dirtar, project)) 
     print 'Deploying directory tar %s.' % dirtar
     _deploy(dirtar) 
-    local('rm %s' % dirtar)
 
 def _release_python(version_re, versionTemplate, default_branch):
     currentVersionStr = local('python setup.py --version', capture=True) 
@@ -239,10 +238,11 @@ def _release_dir(default_branch):
 
 def _release_cei(project, version_re, versionTemplate, gitUrl,
         default_branch='master', isPython=True):
-    local('rm -rf ../tmpfab_%s' % project)
-    local('git clone %s ../tmpfab_%s' % (gitUrl, project))
+    local('rm -rf ../tmpfab')
+    local('mkdir ../tmpfab')
+    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
 
-    with lcd(os.path.join('..', 'tmpfab_%s' % project)):
+    with lcd(os.path.join('..', 'tmpfab', project)):
         branch = prompt('Please enter branch or commit for release point:',
             default=default_branch)
         local('git checkout %s' % branch)
@@ -254,10 +254,10 @@ def _release_cei(project, version_re, versionTemplate, gitUrl,
 
         _add_version(project, versionStr)
 
-    with lcd('..'):
+    with lcd(os.path.join('..', 'tmpfab')):
         _tar_project_dir(project, versionStr)
 
-    local('rm -rf ../tmpfab_%s' % project)
+    # local('rm -rf ../tmpfab')
 
 def _showIntro():
     print '''
