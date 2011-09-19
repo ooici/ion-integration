@@ -198,7 +198,7 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
 def _add_version(project, versionStr):
     print 'Preparing to tar up project directory.'
     local('git clean -f -d')
-    local('git rev-parse HEAD > .gitmessage')
+    local('git rev-parse HEAD > .gitcommit')
     local('echo %s-%s > .projectversion' % (project, versionStr))
     local('rm -rf .git')
 
