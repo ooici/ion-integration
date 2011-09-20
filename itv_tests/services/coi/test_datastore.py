@@ -80,6 +80,7 @@ class CassandraBackedDataStoreTest(ItvTestCase):
 
 
             self.proc.workbench.clear_repository(repo)
+            self.proc.workbench.manage_workbench_cache('Default Context')
             mem = yield pu.print_memory_usage()
             log.info(mem)
 
@@ -100,7 +101,7 @@ class CassandraBackedDataStoreTest(ItvTestCase):
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
 
-            self.proc.workbench.manage_workbench_cache('Test runner context!')
+            self.proc.workbench.manage_workbench_cache('Default Context')
             mem = yield pu.print_memory_usage()
             log.info(mem)
             log.info(self.proc.workbench_memory())
