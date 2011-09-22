@@ -257,7 +257,7 @@ def _release_cei(project, version_re, versionTemplate, gitUrl,
     with lcd(os.path.join('..', 'tmpfab')):
         _tar_project_dir(project, versionStr)
 
-    # local('rm -rf ../tmpfab')
+    local('rm -rf ../tmpfab')
 
 def _showIntro():
     print '''
