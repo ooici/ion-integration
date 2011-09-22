@@ -359,6 +359,41 @@ def ionintegration():
 
     _release_cei('ion-integration', version_re, 'ionintegration-setup-py', gitUrl, default_branch='develop')
 
+# Script to create supercache tar to speed up ion installation during
+# launch.
+def supercache():
+    vm_ip = prompt('Please enter a lv10 worker vm IP:')
+    local('ssh root@%s "cd /opt/cache;tar czf my_eggs.tar.gz eggs/;tar czf my_ivy.tar.gz ivy/"' % vm_ip)
+    local('rm -rf ../tmpfab')
+    local('mkdir ../tmpfab')
+    with lcd(os.path.join('..', 'tmpfab')):
+        local('scp root@%s:/opt/cache/my*.tar.gz .' % vm_ip)
+        local('tar xzf my_eggs.tar.gz')
+        local('tar xzf my_ivy.tar.gz')
+        # For excluded patterns, rm all the versions except the latest
+        for excluded_pattern in ['ionproto-', 'ioncore-']:
+            local("for f in `ls eggs| grep %s|sort|sed '$d'`;do rm -rf eggs/$f;done"
+                    % excluded_pattern)
+        for excluded_pattern in ['ivy/net.ooici/eoi-agents', 'ivy/net.ooici/ionproto',
+                'ivy/net.ooici/ioncore-java']:
+            local("for f in `ls %s/*.xml|sort|sed '$d'`;do rm $f;done"
+                    % excluded_pattern)
+            local("for f in `ls %s/*.original|sort|sed '$d'`;do rm $f;done"
+                    % excluded_pattern )
+            local("for f in `ls %s/*.properties|sort|sed '$d'`;do rm $f;done"
+                    % excluded_pattern)
+            local("if [ -e %s/jars ];then for f in `ls %s/jars/*|sort|sed '$d'`;do rm $f;done;fi"
+                    % (excluded_pattern, excluded_pattern))
+            local("if [ -e %s/poms ];then for f in `ls %s/poms/*|sort|sed '$d'`;do rm $f;done;fi"
+                    % (excluded_pattern, excluded_pattern))
+        local('tar czf supercache.tar.gz ivy/ eggs/')
+        global scpUser
+        scpUser = os.getlogin()
+        scpUser = prompt('Please enter your amoeba login name:', default=scpUser)
+        local('ssh %s@amoeba.ucsd.edu "' % scpUser + r'cd /var/www/releases; mv supercache.tar.gz supercache.tar.gz.$(date +%Y%m%d.%H%M)' + '"')
+        _deploy('supercache.tar.gz')
+    local('rm -rf ../tmpfab')
+
 class JavaVersion(object):
     def __init__(self):
         self.version = None
