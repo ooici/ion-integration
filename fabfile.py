@@ -208,7 +208,7 @@ def _tar_project_dir(project, versionStr):
     print 'Deploying directory tar %s.' % dirtar
     _deploy(dirtar) 
 
-def _release_python(version_re, versionTemplate, branch):
+def _releasePython(version_re, versionTemplate, branch):
     currentVersionStr = local('python setup.py --version', capture=True) 
     version = _getNextVersion(currentVersionStr)
     _replaceVersionInFile('setup.py', version_re,
@@ -225,7 +225,7 @@ def _release_python(version_re, versionTemplate, branch):
 
     return versionStr
 
-def _release_dir(branch):
+def _releaseDir(branch):
     currentVersionStr = local('cat VERSION.txt', capture=True) 
     version = _getNextVersion(currentVersionStr)
     versionStr = '%d.%d.%d' % (version['major'], version['minor'],
@@ -236,7 +236,7 @@ def _release_dir(branch):
    
     return versionStr
 
-def _release_cei(project, version_re, versionTemplate, gitUrl,
+def _releaseCEI(project, version_re, versionTemplate, gitUrl,
         default_branch='master', isPython=True):
     local('rm -rf ../tmpfab')
     local('mkdir ../tmpfab')
@@ -252,10 +252,10 @@ def _release_cei(project, version_re, versionTemplate, gitUrl,
         local('git reset --hard %s' % commit)
        
         if isPython:
-            versionStr = _release_python(version_re, versionTemplate,
+            versionStr = _releasePython(version_re, versionTemplate,
                     branch)
         else:
-            versionStr = _release_dir(branch)
+            versionStr = _releaseDir(branch)
 
         _add_version(project, versionStr)
 
@@ -333,36 +333,36 @@ def python():
 def dtdata():
     gitUrl = 'git@github.com:ooici/dt-data.git'
 
-    _release_cei('dt-data', 'n/a' , 'n/a', gitUrl, isPython=False)
+    _releaseCEI('dt-data', 'n/a' , 'n/a', gitUrl, isPython=False)
 
 def launchplans():
     gitUrl = 'git@github.com:ooici/launch-plans.git'
 
-    _release_cei('launch-plans', 'n/a' , 'n/a', gitUrl, isPython=False)
+    _releaseCEI('launch-plans', 'n/a' , 'n/a', gitUrl, isPython=False)
 
 def epu():
     gitUrl = 'git@github.com:ooici/epu.git'
     version_re = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
     
-    _release_cei('epu', version_re, 'epu-setup-py', gitUrl)
+    _releaseCEI('epu', version_re, 'epu-setup-py', gitUrl)
 
 def epuagent():
     gitUrl = 'git@github.com:ooici/epuagent.git'
     version_re = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
    
-    _release_cei('epuagent', version_re, 'epuagent-setup-py', gitUrl)
+    _releaseCEI('epuagent', version_re, 'epuagent-setup-py', gitUrl)
 
 def epumgmt():
     gitUrl = 'git://github.com/nimbusproject/epumgmt.git'
     version_re = re.compile('(?P<indent>\s*)version = "(?P<version>[^\s]+)"')
     
-    _release_cei('epumgmt', version_re, 'epumgmt-setup-py', gitUrl)
+    _releaseCEI('epumgmt', version_re, 'epumgmt-setup-py', gitUrl)
 
 def ionintegration():
     gitUrl = 'git@github.com:ooici/ion-integration.git'
     version_re = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
 
-    _release_cei('ion-integration', version_re, 'ionintegration-setup-py', gitUrl, default_branch='develop')
+    _releaseCEI('ion-integration', version_re, 'ionintegration-setup-py', gitUrl, default_branch='develop')
 
 # Script to create supercache tar to speed up ion installation during
 # launch.
