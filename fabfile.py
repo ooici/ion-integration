@@ -208,7 +208,7 @@ def _tar_project_dir(project, versionStr):
     print 'Deploying directory tar %s.' % dirtar
     _deploy(dirtar) 
 
-def _release_python(version_re, versionTemplate, default_branch):
+def _release_python(version_re, versionTemplate, branch):
     currentVersionStr = local('python setup.py --version', capture=True) 
     version = _getNextVersion(currentVersionStr)
     _replaceVersionInFile('setup.py', version_re,
@@ -218,21 +218,21 @@ def _release_python(version_re, versionTemplate, default_branch):
     local('python setup.py sdist')
     local('chmod -R 775 dist')
     _deploy('dist/*.tar.gz')
-    remote = _gitTag(version, branch=default_branch, cloned=True)
+    remote = _gitTag(version, branch=branch, cloned=True)
    
     versionStr = '%d.%d.%d' % (version['major'], version['minor'],
             version['micro'])
 
     return versionStr
 
-def _release_dir(default_branch):
+def _release_dir(branch):
     currentVersionStr = local('cat VERSION.txt', capture=True) 
     version = _getNextVersion(currentVersionStr)
     versionStr = '%d.%d.%d' % (version['major'], version['minor'],
             version['micro'])
     local('echo %s > VERSION.txt' % versionStr)
 
-    remote = _gitTag(version, branch=default_branch, cloned=True)
+    remote = _gitTag(version, branch=branch, cloned=True)
    
     return versionStr
 
@@ -243,14 +243,19 @@ def _release_cei(project, version_re, versionTemplate, gitUrl,
     local('git clone %s ../tmpfab/%s' % (gitUrl, project))
 
     with lcd(os.path.join('..', 'tmpfab', project)):
-        branch = prompt('Please enter branch or commit for release point:',
+        branch = prompt('Please enter release branch:',
             default=default_branch)
+
+        commit = prompt('Please enter commit to release:',
+            default='HEAD')
         local('git checkout %s' % branch)
+        local('git reset --hard %s' % commit)
        
         if isPython:
-            versionStr = _release_python(version_re, versionTemplate, default_branch)
+            versionStr = _release_python(version_re, versionTemplate,
+                    branch)
         else:
-            versionStr = _release_dir(default_branch)
+            versionStr = _release_dir(branch)
 
         _add_version(project, versionStr)
 
