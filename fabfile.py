@@ -18,6 +18,7 @@ from _version import Version
 version = Version('ion', %(major)s, %(minor)s, %(micro)s)
 '''
     , 'java-ivy-ioncore-dev': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s-dev" />'
+    , 'java-ivy-ioncore': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-ivy-eoi-agents': '<info module="eoi-agents" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-ivy-proto': '<info module="ionproto" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-build': 'version=%(major)s.%(minor)s.%(micro)s'
@@ -419,34 +420,72 @@ class JavaNextVersion(object):
 
 ivyRevisionRe = re.compile('(?P<indent>\s*)<info .* revision="(?P<version>[^"]+)"')
 buildRevisionRe = re.compile('(?P<indent>\s*)version=(?P<version>[^\s]+)')
+def _getJavaVersion():
+
+    ivyVersionD, ivyVersionT, ivyVersionS = _getVersionInFile('ivy.xml', ivyRevisionRe)
+    buildVersionD, buildVersionT, buildVersionS  = _getVersionInFile('build.properties', buildRevisionRe)
+    if (ivyVersionT != buildVersionT):
+        abort('Versions do not match in ivy.xml and build.properties')
+    
+    # Chop off suffix
+    if buildVersionD['pre'] is not None:
+        buildVersionS = ivyVersionS[:-len(buildVersionD['pre'])]
+    del buildVersionD['pre']
+    
+    return buildVersionS, buildVersionD
+
+def _releaseJava(ivyDevVersionTemplate, buildDevVersionTemplate,
+        ivyVersionTemplate, buildVersionTemplate, branch):
+    
+    versionS, versionD = _getJavaVersion()
+
+    # Chop off -dev suffix for release
+    _replaceVersionInFile('ivy.xml', ivyRevisionRe,
+            versionTemplates[ivyVersionTemplate], lambda new: versionD)
+    _replaceVersionInFile('build.properties', buildRevisionRe,
+            versionTemplates[buildVersionTemplate], lambda new: versionD)
+    
+    local('ant ivy-publish-local')
+    local('chmod -R 775 .settings/ivy-publish/')
+    
+    _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
+    
+    remote =  _gitTag(versionD, branch=branch, cloned=True)
+    # Bump version & add -dev suffix
+    devVersion = JavaNextVersion()
+    devVersion(versionS)
+    _replaceVersionInFile('ivy.xml', ivyRevisionRe,
+            versionTemplates[ivyDevVersionTemplate], devVersion)
+    _replaceVersionInFile('build.properties', buildRevisionRe,
+            versionTemplates[buildDevVersionTemplate], devVersion)
+    
+    devVersion = devVersion.version
+    devVersionStr = '%d.%d.%d-dev' % (devVersion['major'], devVersion['minor'],
+            devVersion['micro'])
+    local('git commit -am "Bump version to %s"' % devVersionStr)
+    local('git push %s %s' % (remote, branch))
+    
 def java():
-    with lcd(os.path.join('..', 'ioncore-java')):
-        _showIntro()
-        _ensureClean()
-
-        ivyVersionD, ivyVersionT, ivyVersionS = _getVersionInFile('ivy.xml', ivyRevisionRe)
-        if ivyVersionD['pre'] is not None:
-            abort('Cannot release a version with suffix %s in ivy.xml.' %
-                    ivyVersionD['pre'])
-        buildVersionD, buildVersionT, buildVersionS  = _getVersionInFile('build.properties', buildRevisionRe)
-        if buildVersionD['pre'] is not None:
-            abort('Cannot release a version with suffix %s in build.properties.' %
-                    buildVersionD['pre'])
-        if (ivyVersionT != buildVersionT):
-            abort('Versions do not match in ivy.xml and build.properties')
-
-        local('ant ivy-publish-local')
-        local('chmod -R 775 .settings/ivy-publish/')
-
-        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
-
-        devVersion = JavaNextVersion()
-        devVersion(buildVersionS)
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-ioncore-dev'], devVersion)
-        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build-dev'], devVersion)
+    gitUrl = 'git@github.com:ooici/ioncore-java.git'
+    project = 'ioncore-java'
+    default_branch = 'develop'
+    
+    local('rm -rf ../tmpfab')
+    local('mkdir ../tmpfab')
+    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
+    
+    with lcd(os.path.join('..', 'tmpfab', project)):
+        branch = prompt('Please enter release branch:',
+            default=default_branch)
+        commit = prompt('Please enter commit to release:',
+            default='HEAD')
+        local('git checkout %s' % branch)
+        local('git reset --hard %s' % commit)
         
-        remote =  _gitTag(buildVersionD)
-        # _gitForwardMaster(remote)
+        _releaseJava('java-ivy-ioncore-dev', 'java-build-dev',
+                'java-ivy-ioncore', 'java-build', branch)
+
+    local('rm -rf ../tmpfab')
 
 def javadev():
     with lcd(os.path.join('..', 'ioncore-java')):
