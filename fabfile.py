@@ -536,10 +536,21 @@ def eoiagents():
 
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
 def proto():
-    with lcd(os.path.join('..', 'ion-object-definitions')):
-        _showIntro()
-        _ensureClean()
-
+    gitUrl = 'git@github.com:ooici/ion-object-definitions.git'
+    project = 'ion-object-definitions'
+    default_branch = 'develop'
+    
+    local('rm -rf ../tmpfab')
+    local('mkdir ../tmpfab')
+    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
+    
+    with lcd(os.path.join('..', 'tmpfab', project)):
+        branch = prompt('Please enter release branch:',
+            default=default_branch)
+        commit = prompt('Please enter commit to release:',
+            default='HEAD')
+        local('git checkout %s' % branch)
+        local('git reset --hard %s' % commit)
         version = JavaVersion()
         _replaceVersionInFile(os.path.join('python', 'setup.py'), setupPyRevisionRe, versionTemplates['setup-py'], version)
         _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-proto'], version)
@@ -554,3 +565,4 @@ def proto():
 
         remote = _gitTag(version.version)
 
+    local('rm -rf ../tmpfab')
