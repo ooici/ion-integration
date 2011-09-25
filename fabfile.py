@@ -288,20 +288,31 @@ Prerequisites:
 setupProtoRe = re.compile("(?P<indent>\s*)'ionproto[><=]=(?P<version>[^']+)'")
 devProtoRe = re.compile('(?P<indent>\s*)ionproto[><=]?=(?P<version>.+)')
 def python():
-    with lcd(os.path.join('..', 'ion-object-definitions', 'python')):
-        with hide('running', 'stdout', 'stderr'):
-            branch = local('git symbolic-ref HEAD 2>/dev/null || echo unamed branch',
-                    capture=True).split('/')[-1]
-            if branch != 'develop' :
-                abort('You must be in the "develop" branch of dir %s (you are in "%s").' 
-                        % (local('pwd', capture=True), branch))
+    gitUrl = 'git@github.com:ooici/ioncore-python.git'
+    protoGitUrl = 'git@github.com:ooici/ion-object-definitions.git'
+    project = 'ioncore-python'
+    protoProject = 'ion-object-definitions'
+    default_branch = 'develop'
+    
+    local('rm -rf ../tmpfab')
+    local('mkdir ../tmpfab')
+    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
+    
+    branch = prompt('Please enter release branch:',
+        default=default_branch)
+    commit = prompt('Please enter commit to release:',
+        default='HEAD')
+    
+    local('git clone %s ../tmpfab/%s' % (protoGitUrl, protoProject))
+    with lcd(os.path.join('..', 'tmpfab', protoProject, 'python')):
+        local('git checkout %s' % branch)
+        local('git reset --hard HEAD')
         protoVersion = local('python setup.py --version', capture=True).strip()
         protoVersion = _validateVersion(protoVersion)
 
-    with lcd(os.path.join('..', 'ioncore-python')):
-
-        _showIntro()
-        _ensureClean()
+    with lcd(os.path.join('..', 'tmpfab', project)):
+        local('git checkout %s' % branch)
+        local('git reset --hard %s' % commit)
 
         with hide('running', 'stdout', 'stderr'):
             currentVersionStr = local('python setup.py --version', capture=True)
@@ -321,16 +332,16 @@ def python():
         local('chmod -R 775 dist')
         _deploy('dist/*.tar.gz')
 
-        remote = _gitTag(version)
+        remote = _gitTag(version, branch=branch, cloned=True)
 
-        # Set the ionproto dependency after version tagging
-        _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-greater'], lambda old: protoVersion[0])
-        msg = versionTemplates['git-proto-greater-message'] % protoVersion[0]
-        local('git commit -am "%s"' % (msg))
-        branch = 'develop'
-        local('git push %s %s' % (remote, branch))
-
-        #_gitForwardMaster(remote)
+        if branch == 'develop':
+            # Set the ionproto dependency after version tagging
+            _replaceVersionInFile('setup.py', setupProtoRe, versionTemplates['setup-py-proto-greater'], lambda old: protoVersion[0])
+            msg = versionTemplates['git-proto-greater-message'] % protoVersion[0]
+            local('git commit -am "%s"' % (msg))
+            local('git push %s %s' % (remote, branch))
+    
+    local('rm -rf ../tmpfab')
 
 def dtdata():
     gitUrl = 'git@github.com:ooici/dt-data.git'
