@@ -563,6 +563,6 @@ def proto():
         _deploy('dist/lib/*.tar.gz')
         _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
-        remote = _gitTag(version.version)
+        remote = _gitTag(version.version, branch=branch, cloned=True)
 
     local('rm -rf ../tmpfab')
