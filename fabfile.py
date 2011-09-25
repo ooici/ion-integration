@@ -20,6 +20,7 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'java-ivy-ioncore-dev': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s-dev" />'
     , 'java-ivy-ioncore': '<info module="ioncore-java" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-ivy-eoi-agents': '<info module="eoi-agents" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
+    , 'java-ivy-eoi-agents-dev': '<info module="eoi-agents" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s-dev" />'
     , 'java-ivy-proto': '<info module="ionproto" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-build': 'version=%(major)s.%(minor)s.%(micro)s'
     , 'java-build-dev': 'version=%(major)s.%(minor)s.%(micro)s-dev'
@@ -512,33 +513,26 @@ def javadev():
     local('rm -rf ../tmpfab')
 
 def eoiagents():
-    with lcd(os.path.join('..', 'eoi-agents')):
-        _showIntro()
-        _ensureClean()
-
-        ivyVersionD, ivyVersionT, ivyVersionS = _getVersionInFile('ivy.xml', ivyRevisionRe)
-        if ivyVersionD['pre'] is not None:
-            abort('Cannot release a version with suffix %s in ivy.xml.' %
-                    ivyVersionD['pre'])
-        buildVersionD, buildVersionT, buildVersionS  = _getVersionInFile('build.properties', buildRevisionRe)
-        if buildVersionD['pre'] is not None:
-            abort('Cannot release a version with suffix %s in build.properties.' %
-                    buildVersionD['pre'])
-        if (ivyVersionT != buildVersionT):
-            abort('Versions do not match in ivy.xml and build.properties')
-
-        local('ant ivy-publish-local')
-        local('chmod -R 775 .settings/ivy-publish/')
-
-        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
-
-        devVersion = JavaNextVersion()
-        devVersion(buildVersionS)
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-eoi-agents'], devVersion)
-        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], devVersion)
+    gitUrl = 'git@github.com:ooici-eoi/eoi-agents.git'
+    project = 'eoi-agents'
+    default_branch = 'develop'
+    
+    local('rm -rf ../tmpfab')
+    local('mkdir ../tmpfab')
+    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
+    
+    with lcd(os.path.join('..', 'tmpfab', project)):
+        branch = prompt('Please enter release branch:',
+            default=default_branch)
+        commit = prompt('Please enter commit to release:',
+            default='HEAD')
+        local('git checkout %s' % branch)
+        local('git reset --hard %s' % commit)
         
-        remote =  _gitTag(buildVersionD)
-        # _gitForwardMaster(remote)
+        _releaseJava('java-ivy-eoi-agents-dev', 'java-build-dev',
+                'java-ivy-eoi-agents', 'java-build', branch)
+
+    local('rm -rf ../tmpfab')
 
 setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
 def proto():
