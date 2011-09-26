@@ -499,30 +499,6 @@ def java():
 
     local('rm -rf ../tmpfab')
 
-def javadev():
-    gitUrl = 'git@github.com:ooici/ioncore-java.git'
-    project = 'ioncore-java'
-    default_branch = 'develop'
-    
-    local('rm -rf ../tmpfab')
-    local('mkdir ../tmpfab')
-    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
-    
-    with lcd(os.path.join('..', 'tmpfab', project)):
-        branch = prompt('Please enter release branch:',
-            default=default_branch)
-        commit = prompt('Please enter commit to release:',
-            default='HEAD')
-        local('git checkout %s' % branch)
-        local('git reset --hard %s' % commit)
-        
-        local('ant ivy-publish-local')
-        local('chmod -R 775 .settings/ivy-publish/')
-
-        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
-
-    local('rm -rf ../tmpfab')
-
 def eoiagents():
     gitUrl = 'git@github.com:ooici-eoi/eoi-agents.git'
     project = 'eoi-agents'
