@@ -9,6 +9,7 @@
 import os
 import subprocess
 
+import random
 
 import ion.util.ionlog
 from ion.core.process import process
@@ -36,7 +37,6 @@ from telephus.cassandra.ttypes import InvalidRequestException
 from ion.services.coi.test import test_datastore as datastore_test
 create_large_object = datastore_test.create_large_object
 
-
 from ion.core.object import object_utils
 OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version=1)
 
@@ -45,7 +45,7 @@ class CassandraBackedDataStoreTest(ItvTestCase):
 
     repetitions=200
 
-    timeout = 600
+    timeout = 800
     app_dependencies = [
             #("res/deploy/bootlevel4_local.rel", "id=1"),
 
@@ -97,6 +97,54 @@ class CassandraBackedDataStoreTest(ItvTestCase):
         for i in range(self.repetitions):
 
             result = yield self.proc.workbench.pull('datastore',self.repo_key)
+
+            self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
+
+
+            self.proc.workbench.manage_workbench_cache('Default Context')
+            mem = yield pu.print_memory_usage()
+            log.info(mem)
+            log.info(self.proc.workbench_memory())
+
+
+    @defer.inlineCallbacks
+    def test_pull_and_push(self):
+
+        repo = yield create_large_object(self.proc.workbench)
+
+        result = yield self.proc.workbench.push('datastore',repo)
+
+        self.repo_key = repo.repository_key
+
+        del repo
+
+        for i in range(self.repetitions):
+
+            result = yield self.proc.workbench.pull('datastore',self.repo_key)
+
+            self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
+
+            repo = self.proc.workbench.get_repository(self.repo_key)
+
+            yield repo.checkout('master')
+
+            for j in range(10):
+                # This is extremely expensive - the old value must be decoded and a new GPB created for the new value!
+                repo.root_object.value[random.randint(0,1000)] = chr(random.randint(0,255))
+
+                repo.commit('Commit # %d' % i)
+
+
+            for j in range(10):
+                commitref = repo.resolve_treeish('~%d'%random.randint(1,10), 'master')
+                commit = commitref.MyId
+
+                yield repo.checkout('master', commit_id=commit)
+
+            yield repo.checkout('master')
+
+
+            result = yield self.proc.workbench.push('datastore',repo)
 
             self.assertEqual(result.MessageResponseCode, result.ResponseCodes.OK)
 
