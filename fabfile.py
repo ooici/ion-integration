@@ -412,6 +412,31 @@ def supercache():
         _deploy('supercache.tar.gz')
     local('rm -rf ../tmpfab')
 
+# Decorator class to fab target
+class cloneDir(object):
+    def __init__(self, gitUrl, project, default_branch):
+        self.gitUrl = gitUrl
+        self.project = project
+        self.default_branch = default_branch
+
+    def __call__(self, f):
+        def wrapped_f(*args, **kwargs):
+            local('rm -rf ../tmpfab')
+            local('mkdir ../tmpfab')
+            local('git clone %s ../tmpfab/%s' % (self.gitUrl, self.project))
+            
+            with lcd(os.path.join('..', 'tmpfab', self.project)):
+                branch = prompt('Please enter release branch:',
+                    default=self.default_branch)
+                commit = prompt('Please enter commit to release:',
+                    default='HEAD')
+                local('git checkout %s' % branch)
+                local('git reset --hard %s' % commit)
+                kwargs['branch'] = branch
+                f(*args, **kwargs)
+            local('rm -rf ../tmpfab')
+        return wrapped_f
+
 class JavaVersion(object):
     def __init__(self):
         self.version = None
@@ -477,79 +502,35 @@ def _releaseJava(ivyDevVersionTemplate, buildDevVersionTemplate,
     local('git commit -am "Bump version to %s"' % devVersionStr)
     local('git push %s %s' % (remote, branch))
     
-def java():
-    gitUrl = 'git@github.com:ooici/ioncore-java.git'
-    project = 'ioncore-java'
-    default_branch = 'develop'
-    
-    local('rm -rf ../tmpfab')
-    local('mkdir ../tmpfab')
-    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
-    
-    with lcd(os.path.join('..', 'tmpfab', project)):
-        branch = prompt('Please enter release branch:',
-            default=default_branch)
-        commit = prompt('Please enter commit to release:',
-            default='HEAD')
-        local('git checkout %s' % branch)
-        local('git reset --hard %s' % commit)
-        
-        _releaseJava('java-ivy-ioncore-dev', 'java-build-dev',
-                'java-ivy-ioncore', 'java-build', branch)
+@cloneDir(gitUrl='git@github.com:ooici/ioncore-java.git',
+    project='ioncore-java',
+    default_branch='develop')
+def java(branch):
+    _releaseJava('java-ivy-ioncore-dev', 'java-build-dev',
+            'java-ivy-ioncore', 'java-build', branch)
 
-    local('rm -rf ../tmpfab')
+@cloneDir(gitUrl='git@github.com:ooici/eoi-agents.git',
+    project='eoi-agents',
+    default_branch='develop')
+def eoiagents(branch):
+    _releaseJava('java-ivy-eoi-agents-dev', 'java-build-dev',
+            'java-ivy-eoi-agents', 'java-build', branch)
 
-def eoiagents():
-    gitUrl = 'git@github.com:ooici-eoi/eoi-agents.git'
-    project = 'eoi-agents'
-    default_branch = 'develop'
-    
-    local('rm -rf ../tmpfab')
-    local('mkdir ../tmpfab')
-    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
-    
-    with lcd(os.path.join('..', 'tmpfab', project)):
-        branch = prompt('Please enter release branch:',
-            default=default_branch)
-        commit = prompt('Please enter commit to release:',
-            default='HEAD')
-        local('git checkout %s' % branch)
-        local('git reset --hard %s' % commit)
-        
-        _releaseJava('java-ivy-eoi-agents-dev', 'java-build-dev',
-                'java-ivy-eoi-agents', 'java-build', branch)
+@cloneDir(gitUrl='git@github.com:ooici/ion-object-definitions.git',
+    project='ion-object-definitions',
+    default_branch='develop')
+def proto(branch):
+    version = JavaVersion()
+    setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
+    _replaceVersionInFile(os.path.join('python', 'setup.py'), setupPyRevisionRe, versionTemplates['setup-py'], version)
+    _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-proto'], version)
+    _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
 
-    local('rm -rf ../tmpfab')
+    local('ant ivy-publish-local')
+    local('chmod -R 775 dist')
+    local('chmod -R 775 .settings/ivy-publish/')
 
-setupPyRevisionRe = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
-def proto():
-    gitUrl = 'git@github.com:ooici/ion-object-definitions.git'
-    project = 'ion-object-definitions'
-    default_branch = 'develop'
-    
-    local('rm -rf ../tmpfab')
-    local('mkdir ../tmpfab')
-    local('git clone %s ../tmpfab/%s' % (gitUrl, project))
-    
-    with lcd(os.path.join('..', 'tmpfab', project)):
-        branch = prompt('Please enter release branch:',
-            default=default_branch)
-        commit = prompt('Please enter commit to release:',
-            default='HEAD')
-        local('git checkout %s' % branch)
-        local('git reset --hard %s' % commit)
-        version = JavaVersion()
-        _replaceVersionInFile(os.path.join('python', 'setup.py'), setupPyRevisionRe, versionTemplates['setup-py'], version)
-        _replaceVersionInFile('ivy.xml', ivyRevisionRe, versionTemplates['java-ivy-proto'], version)
-        _replaceVersionInFile('build.properties', buildRevisionRe, versionTemplates['java-build'], version)
+    _deploy('dist/lib/*.tar.gz')
+    _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
 
-        local('ant ivy-publish-local')
-        local('chmod -R 775 dist')
-        local('chmod -R 775 .settings/ivy-publish/')
-
-        _deploy('dist/lib/*.tar.gz')
-        _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
-
-        remote = _gitTag(version.version, branch=branch, cloned=True)
-
-    local('rm -rf ../tmpfab')
+    remote = _gitTag(version.version, branch=branch, cloned=True)
