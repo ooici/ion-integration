@@ -509,7 +509,7 @@ def java(branch):
     _releaseJava('java-ivy-ioncore-dev', 'java-build-dev',
             'java-ivy-ioncore', 'java-build', branch)
 
-@cloneDir(gitUrl='git@github.com:ooici/eoi-agents.git',
+@cloneDir(gitUrl='git@github.com:ooici-eoi/eoi-agents.git',
     project='eoi-agents',
     default_branch='develop')
 def eoiagents(branch):
