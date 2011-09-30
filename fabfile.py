@@ -24,6 +24,7 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'java-ivy-proto': '<info module="ionproto" organisation="net.ooici" revision="%(major)s.%(minor)s.%(micro)s" />'
     , 'java-build': 'version=%(major)s.%(minor)s.%(micro)s'
     , 'java-build-dev': 'version=%(major)s.%(minor)s.%(micro)s-dev'
+    , 'app-properties': 'app.version=%(major)s.%(minor)s.%(micro)s'
     , 'git-tag': 'v%(major)s.%(minor)s.%(micro)s'
     , 'git-message': 'Release Version %(major)s.%(minor)s.%(micro)s'
     , 'git-proto-greater-message': 'Update ionproto>=%(major)s.%(minor)s.%(micro)s in setup.py'
@@ -454,6 +455,18 @@ class JavaNextVersion(object):
             cvd['micro'] = cvd['micro'] + 1
             self.version = cvd
         return self.version
+
+@cloneDir(gitUrl='git@github.com:ooici/ooici-pres.git',
+    project='ooici-pres',
+    default_branch='master')
+def ui(branch):
+    AppVersionRe = re.compile('(?P<indent>\s*)app.version=(?P<version>[^\s]+)')
+    appVersionD, appVersionT, appVersionS = _getVersionInFile('application.properties', AppVersionRe)
+    version = _getNextVersion(appVersionS)
+    _replaceVersionInFile('application.properties', AppVersionRe,
+        versionTemplates['app-properties'], lambda new: version)
+
+    remote = _gitTag(version, branch=branch, cloned=True)
 
 ivyRevisionRe = re.compile('(?P<indent>\s*)<info .* revision="(?P<version>[^"]+)"')
 buildRevisionRe = re.compile('(?P<indent>\s*)version=(?P<version>[^\s]+)')
