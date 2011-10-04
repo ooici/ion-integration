@@ -15,7 +15,7 @@ except ImportError:
 
 setup(
     name = 'ion-integration',
-    version = '1.0.1',
+    version = '1.0.2',
     description = 'OOI ION Integration Tests',
     url = 'http://www.oceanobservatories.org/spaces/display/CIDev/LCAARCH+Development+Project',
     download_url = 'http://ooici.net/packages',
