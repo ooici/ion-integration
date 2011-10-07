@@ -8,7 +8,7 @@
 itv_trial is designed to be a lightweight integration testing framework for
 projects based on ION.  The goal is to be able to use the same tests, via trial,
 to do integration testing on a CEI bootstrapped system running in a cloud environment,
-and a local system where app_dependencies your tests require are run in separate 
+and a local system where app_dependencies your tests require are run in separate
 capability containers.
 
 This information is superceded by: https://confluence.oceanobservatories.org/display/CIDev/ITV+Trial+tool+and+Integration+Testing
@@ -61,7 +61,7 @@ Example:
 
 Important points:
 - The sysname parameter is required to get all the app_dependencies and tests running on the same
-  system. itv_trial takes care of this for you, but if you want to deploy these tests vs 
+  system. itv_trial takes care of this for you, but if you want to deploy these tests vs
   a CEI spawned environment, you must set the environment variable ION_TEST_CASE_SYSNAME
   to be the same as the sysname the CEI environment was spawned with.
 """
@@ -143,33 +143,33 @@ def build_twistd_args(service, serviceargs, pidfile, logfile, lockfile, opts, sh
         extraargs += "," + serviceargs
 
     # build command line
-    sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile] 
-       
+    sargs = ["bin/twistd", "-n", "--pidfile", pidfile, "--logfile", logfile]
+
     if opts.profiler:
         #I assume that service is a string of this format res/apps/service.app
         app_file = service.split(os.sep)[-1]
-        service_name = app_file.split(".")[0] 
+        service_name = app_file.split(".")[0]
         sargs +=["--savestats", "--profiler="+ opts.profiler, "--profile", service_name+".prof"]
-    
+
     #Everything before the cc app are arguments to twistd, otherwise they are arguments to cc.
     sargs += ["cc", "-h", opts.hostname]
-    
+
     if lockfile:
         sargs += ["--lockfile", lockfile]
-    
+
     if not shell:
         sargs.append("-n")
     sargs.append("-a")
     sargs.append(extraargs)
-    
-        
+
+
     if service != "":
         sargs.append(service)
-    
+
     # if specified, wrap the twisted container spawn in this exec
     if opts.wrapbin and not shell:
         sargs = opts.wrapbin.split(" ") + sargs
-    
+
     return sargs
 
 def main():
@@ -195,7 +195,7 @@ def main():
     if opts.debug and len(itvfileapps) > 0:
         print "Apps to run with all tests (via .itv):", itvfileapps
 
-    # MUST SET THIS ENV VAR before we load tests, otherwise the bootstrap.py will attempt to install a busy loop detection 
+    # MUST SET THIS ENV VAR before we load tests, otherwise the bootstrap.py will attempt to install a busy loop detection
     # mechanism which breaks several things here.
 
     # only set the env if it is not already set
@@ -321,7 +321,7 @@ def main():
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
             if newenv.get('COVERAGE_RUN', None) is not None:
-                newenv['COVERAGE_FILE'] = '.coverage.cc-%s' % (str(uniqueid)) 
+                newenv['COVERAGE_FILE'] = '.coverage.cc-%s' % (str(uniqueid))
 
             # spawn container
             po = subprocess.Popen(sargs, env=newenv, preexec_fn=squelch_int)
@@ -358,8 +358,8 @@ def main():
                 raise
 
             #The containers has started so open the pidfiles
-           
-            
+
+
         # relay signals to trial process we're waiting for
         def handle_signal(signum, frame):
             os.kill(trialpid, signum)
@@ -408,11 +408,11 @@ def main():
                     app_pids.append(pid)
                 except IOError, ex:
                     print "Problem with the pidfile: %s  errno: %s message: %s" % (pidfile, ex.errno, ex.message)
-            newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)   
+            newenv["ION_TEST_CASE_PIDS"] = ",".join(app_pids)
             newenv['ION_ALTERNATE_LOGGING_CONF'] = 'res/logging/ionlogging_stdout.conf'
             newenv["ION_TEST_CASE_SYSNAME"] = opts.sysname
             newenv["ION_TEST_CASE_BROKER_HOST"] = opts.hostname
- 
+
             if opts.launcher:
                 # do nothing, spinwait for CTRL-C
                 print >> sys.stderr, "LAUNCHER MODE, WAITING FOR TERMINATION - launcher pid:", os.getpid()
@@ -449,12 +449,12 @@ def main():
                 targs = opts.trialargs
                 if targs is not None:
                     trialargs = targs.split(" ") + trialargs    # insert args to trial, split on spaces so it recognizes multiples.
-                
+
                 # If running coverage, make sure each run of coverage goes
                 # to a different coverage file name so they don't overwrite
                 if newenv.get('COVERAGE_RUN', None) is not None:
-                    newenv['COVERAGE_FILE'] = '.coverage.%s' % '.'.join([x.__name__ for x in testclass]) 
-                
+                    newenv['COVERAGE_FILE'] = '.coverage.%s' % '.'.join([x.__name__ for x in testclass])
+
                 if opts.wraptrial is not None:
                     wraptrial = opts.wraptrial.split(" ")
                     os.execve(wraptrial[0], wraptrial + ["bin/trial"] + trialargs, newenv)
