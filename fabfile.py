@@ -65,7 +65,7 @@ def _getNextVersion(currentVersionStr):
 
     if versionT <= cvt:
         yesno = prompt('You entered "%s", which is not higher than the current ("%s") and may overwrite a previous release. Are you absolutely SURE? (y/n)' %
-                       (versionTemplates['short'] % versionD, currentVersionStr), default='n') 
+                       (versionTemplates['short'] % versionD, currentVersionStr), default='n')
         if yesno != 'y':
             abort('Invalid version requested, please try again.')
 
@@ -116,7 +116,7 @@ def _ensureClean(default_branch='develop'):
         branch = local('git symbolic-ref HEAD 2>/dev/null || echo unamed branch',
                 capture=True).split('/')[-1]
         if default_branch != branch:
-            abort('You must be in the %s branch of dir %s. (you are in "%s").' 
+            abort('You must be in the %s branch of dir %s. (you are in "%s").'
                     % (default_branch, local('pwd',capture=True), branch))
         changes = local('git status -s --untracked-files=no', capture=True)
 
@@ -197,7 +197,7 @@ def _deploy(pkgPattern, recursive=True, subdir=''):
     local('scp %s %s %s@%s:%s' % (recurseFlag, pkgPattern, scpUser, host, remotePath))
     local('ssh %s@%s chmod 775 %s || exit 0' % (scpUser, host, relFileStr))
     local('ssh %s@%s chgrp teamlead %s || exit 0' % (scpUser, host, relFileStr))
-    
+
 def _add_version(project, versionStr):
     print 'Preparing to tar up project directory.'
     local('git clean -f -d')
@@ -207,12 +207,12 @@ def _add_version(project, versionStr):
 
 def _tar_project_dir(project, versionStr):
     dirtar = '%s_dir-%s.tar.gz' % (project, versionStr)
-    local('tar czf %s %s' % (dirtar, project)) 
+    local('tar czf %s %s' % (dirtar, project))
     print 'Deploying directory tar %s.' % dirtar
-    _deploy(dirtar) 
+    _deploy(dirtar)
 
 def _releasePython(version_re, versionTemplate, branch):
-    currentVersionStr = local('python setup.py --version', capture=True) 
+    currentVersionStr = local('python setup.py --version', capture=True)
     version = _getNextVersion(currentVersionStr)
     _replaceVersionInFile('setup.py', version_re,
             versionTemplates[versionTemplate], lambda new: version)
@@ -222,21 +222,21 @@ def _releasePython(version_re, versionTemplate, branch):
     local('chmod -R 775 dist')
     _deploy('dist/*.tar.gz')
     remote = _gitTag(version, branch=branch, cloned=True)
-   
+
     versionStr = '%d.%d.%d' % (version['major'], version['minor'],
             version['micro'])
 
     return versionStr
 
 def _releaseDir(branch):
-    currentVersionStr = local('cat VERSION.txt', capture=True) 
+    currentVersionStr = local('cat VERSION.txt', capture=True)
     version = _getNextVersion(currentVersionStr)
     versionStr = '%d.%d.%d' % (version['major'], version['minor'],
             version['micro'])
     local('echo %s > VERSION.txt' % versionStr)
 
     remote = _gitTag(version, branch=branch, cloned=True)
-   
+
     return versionStr
 
 def _releaseCEI(project, version_re, versionTemplate, gitUrl,
@@ -253,7 +253,7 @@ def _releaseCEI(project, version_re, versionTemplate, gitUrl,
             default='HEAD')
         local('git checkout %s' % branch)
         local('git reset --hard %s' % commit)
-       
+
         if isPython:
             versionStr = _releasePython(version_re, versionTemplate,
                     branch)
@@ -294,16 +294,16 @@ def python():
     project = 'ioncore-python'
     protoProject = 'ion-object-definitions'
     default_branch = 'develop'
-    
+
     local('rm -rf ../tmpfab')
     local('mkdir ../tmpfab')
     local('git clone %s ../tmpfab/%s' % (gitUrl, project))
-    
+
     branch = prompt('Please enter release branch:',
         default=default_branch)
     commit = prompt('Please enter commit to release:',
         default='HEAD')
-    
+
     local('git clone %s ../tmpfab/%s' % (protoGitUrl, protoProject))
     with lcd(os.path.join('..', 'tmpfab', protoProject, 'python')):
         local('git checkout %s' % branch)
@@ -341,7 +341,7 @@ def python():
             msg = versionTemplates['git-proto-greater-message'] % protoVersion[0]
             local('git commit -am "%s"' % (msg))
             local('git push %s %s' % (remote, branch))
-    
+
     local('rm -rf ../tmpfab')
 
 def dtdata():
@@ -357,19 +357,19 @@ def launchplans():
 def epu():
     gitUrl = 'git@github.com:ooici/epu.git'
     version_re = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
-    
+
     _releaseCEI('epu', version_re, 'epu-setup-py', gitUrl)
 
 def epuagent():
     gitUrl = 'git@github.com:ooici/epuagent.git'
     version_re = re.compile("(?P<indent>\s*)'version' : '(?P<version>[^\s]+)'")
-   
+
     _releaseCEI('epuagent', version_re, 'epuagent-setup-py', gitUrl)
 
 def epumgmt():
     gitUrl = 'git://github.com/nimbusproject/epumgmt.git'
     version_re = re.compile('(?P<indent>\s*)version = "(?P<version>[^\s]+)"')
-    
+
     _releaseCEI('epumgmt', version_re, 'epumgmt-setup-py', gitUrl)
 
 def ionintegration():
@@ -425,7 +425,7 @@ class cloneDir(object):
             local('rm -rf ../tmpfab')
             local('mkdir ../tmpfab')
             local('git clone %s ../tmpfab/%s' % (self.gitUrl, self.project))
-            
+
             with lcd(os.path.join('..', 'tmpfab', self.project)):
                 branch = prompt('Please enter release branch:',
                     default=self.default_branch)
@@ -476,17 +476,17 @@ def _getJavaVersion():
     buildVersionD, buildVersionT, buildVersionS  = _getVersionInFile('build.properties', buildRevisionRe)
     if (ivyVersionT != buildVersionT):
         abort('Versions do not match in ivy.xml and build.properties')
-    
+
     # Chop off suffix
     if buildVersionD['pre'] is not None:
         buildVersionS = ivyVersionS[:-len(buildVersionD['pre'])]
     del buildVersionD['pre']
-    
+
     return buildVersionS, buildVersionD
 
 def _releaseJava(ivyDevVersionTemplate, buildDevVersionTemplate,
         ivyVersionTemplate, buildVersionTemplate, branch):
-    
+
     versionS, versionD = _getJavaVersion()
 
     # Chop off -dev suffix for release
@@ -494,12 +494,12 @@ def _releaseJava(ivyDevVersionTemplate, buildDevVersionTemplate,
             versionTemplates[ivyVersionTemplate], lambda new: versionD)
     _replaceVersionInFile('build.properties', buildRevisionRe,
             versionTemplates[buildVersionTemplate], lambda new: versionD)
-    
+
     local('ant ivy-publish-local')
     local('chmod -R 775 .settings/ivy-publish/')
-    
+
     _deploy('.settings/ivy-publish/repository/*', subdir='/maven/repo')
-    
+
     remote =  _gitTag(versionD, branch=branch, cloned=True)
     # Bump version & add -dev suffix
     devVersion = JavaNextVersion()
@@ -508,13 +508,13 @@ def _releaseJava(ivyDevVersionTemplate, buildDevVersionTemplate,
             versionTemplates[ivyDevVersionTemplate], devVersion)
     _replaceVersionInFile('build.properties', buildRevisionRe,
             versionTemplates[buildDevVersionTemplate], devVersion)
-    
+
     devVersion = devVersion.version
     devVersionStr = '%d.%d.%d-dev' % (devVersion['major'], devVersion['minor'],
             devVersion['micro'])
     local('git commit -am "Bump version to %s"' % devVersionStr)
     local('git push %s %s' % (remote, branch))
-    
+
 @cloneDir(gitUrl='git@github.com:ooici/ioncore-java.git',
     project='ioncore-java',
     default_branch='develop')
