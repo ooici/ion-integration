@@ -44,7 +44,7 @@ OPAQUE_ARRAY_TYPE = object_utils.create_type_identifier(object_id=10016, version
 class CassandraBackedDataStoreTest(datastore_test.DataStoreTest):
 
 
-    repetitions = 100
+    repetitions = 50
 
     timeout = 600
     username = CONF.getValue('cassandra_username', None)
