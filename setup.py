@@ -37,7 +37,7 @@ setup(
                   ],
     packages = find_packages() + ['itv_trial'],
     install_requires = [
-        'ioncore<1.1'
+        'ioncore<1.2'
                        ],
     include_package_data = True,
     test_suite = "tests"
