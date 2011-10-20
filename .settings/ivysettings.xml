@@ -26,7 +26,7 @@
     <!-- Set the defaultCacheDir - The cache location is local to the project so that "ant deep-clean" will not
     wipe out the libraries for all projects on the machine, just the one where "ant deep-clean" was run -->
     <caches defaultCacheDir="${ivy.cache.dir}" />
-    <settings defaultResolver="default"/>
+    <settings defaultResolver="default" defaultResolveMode="dynamic"/>
     <resolvers>
     	<!-- Chain resolver - sequentially tries each repository.  returnFirst="true" results in the first matching artifact
     	being used: subsequent repositories are not checked -->
