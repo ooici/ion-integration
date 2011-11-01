@@ -37,6 +37,7 @@ version = Version('ion', %(major)s, %(minor)s, %(micro)s)
     , 'epuagent-setup-py': "'version' : '%(major)s.%(minor)s.%(micro)s',"
     , 'epumgmt-setup-py': 'version = "%(major)s.%(minor)s.%(micro)s"'
     , 'ionintegration-setup-py': "version = '%(major)s.%(minor)s.%(micro)s',"
+    , 'pyon-setup-py': "version = '%(major)s.%(minor)s.%(micro)s'"
 }
 
 
@@ -455,6 +456,13 @@ class JavaNextVersion(object):
             cvd['micro'] = cvd['micro'] + 1
             self.version = cvd
         return self.version
+
+@cloneDir(gitUrl='git@github.com:ooici/pyon.git',
+    project='pyon',
+    default_branch='master')
+def pyon(branch):
+    version_re = re.compile("(?P<indent>\s*)version = '(?P<version>[^\s]+)'")
+    _releasePython(version_re, 'pyon-setup-py', branch)
 
 @cloneDir(gitUrl='git@github.com:ooici/ooici-pres.git',
     project='ooici-pres',
