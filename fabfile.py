@@ -149,6 +149,9 @@ def _gitTag(version, branch='develop', cloned=False):
     versionTag = versionTemplates['git-tag'] % version
     versionMsg = versionTemplates['git-message'] % version
 
+    comment = prompt('Optional comment for this release:', default='')
+    if comment != '':
+        versionMsg += ': ' + comment
     local('git commit -am "%s"' % (versionMsg))
     commit = local('git rev-parse --short HEAD', capture=True)
     local('git tag -af %s -m "%s" %s' % (versionTag, versionMsg, commit))
