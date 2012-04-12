@@ -155,3 +155,91 @@ class CassandraBackedDataStoreTest(datastore_test.DataStoreTest):
 
         log.info('DataStore1 Push Complex addressbook to DataStore1: complete')
 
+
+
+class CassandraBackedMulitDataStoreTest(datastore_test.MulitDataStoreTest):
+    """
+    Testing Datastore service.
+    """
+
+    username = CONF.getValue('cassandra_username', None)
+    password = CONF.getValue('cassandra_password', None)
+
+
+
+    services = [
+
+            {'name':'ds2','module':'ion.services.coi.datastore','class':'DataStoreService',
+             'spawnargs':{COMMIT_CACHE:'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
+                          BLOB_CACHE:'ion.core.data.cassandra_bootstrap.CassandraStoreBootstrap',PRELOAD_CFG:datastore_test.MulitDataStoreTest.preload, }
+        },
+            {'name':'ds3','module':'ion.services.coi.datastore','class':'DataStoreService',
+             'spawnargs':{COMMIT_CACHE:'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
+                          BLOB_CACHE:'ion.core.data.cassandra_bootstrap.CassandraStoreBootstrap',PRELOAD_CFG:datastore_test.MulitDataStoreTest.preload}
+        },
+            {'name':'ds4','module':'ion.services.coi.datastore','class':'DataStoreService',
+             'spawnargs':{COMMIT_CACHE:'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
+                          BLOB_CACHE:'ion.core.data.cassandra_bootstrap.CassandraStoreBootstrap',PRELOAD_CFG:datastore_test.MulitDataStoreTest.preload}
+        },
+
+        # Start this one last to preload...
+            {'name':'ds1','module':'ion.services.coi.datastore','class':'DataStoreService',
+             'spawnargs':{COMMIT_CACHE:'ion.core.data.cassandra_bootstrap.CassandraIndexedStoreBootstrap',
+                          BLOB_CACHE:'ion.core.data.cassandra_bootstrap.CassandraStoreBootstrap'}
+             }, # The first one does the preload by default
+
+            {'name':'workbench_test1',
+             'module':'ion.core.object.test.test_workbench',
+             'class':'WorkBenchProcess',
+             'spawnargs':{'proc-name':'wb1'}
+        },
+
+            {'name':'workbench_test2',
+             'module':'ion.core.object.test.test_workbench',
+             'class':'WorkBenchProcess',
+             'spawnargs':{'proc-name':'wb2'}
+        },
+        ]
+
+
+    @defer.inlineCallbacks
+    def setUp(self):
+
+        yield self._start_container()
+
+        storage_conf = storage_configuration_utility.get_cassandra_configuration()
+
+        self.keyspace = storage_conf[PERSISTENT_ARCHIVE]["name"]
+
+        # Use a test harness cassandra client to set it up the way we want it for the test and tear it down
+        test_harness = cassandra_bootstrap.CassandraSchemaProvider(self.username, self.password, storage_conf, error_if_existing=False)
+
+        test_harness.connect()
+
+        self.test_harness = test_harness
+
+
+        try:
+            yield self.test_harness.client.system_drop_keyspace(self.keyspace)
+        except InvalidRequestException, ire:
+            log.info('No Keyspace to remove in setup: ' + str(ire))
+
+        yield test_harness.run_cassandra_config()
+
+
+        yield datastore_test.MulitDataStoreTest.setup_services(self)
+
+
+    @defer.inlineCallbacks
+    def tearDown(self):
+
+        try:
+            yield self.test_harness.client.system_drop_keyspace(self.keyspace)
+        except InvalidRequestException, ire:
+            log.info('No Keyspace to remove in teardown: ' + str(ire))
+
+
+        self.test_harness.disconnect()
+
+        yield datastore_test.MulitDataStoreTest.tearDown(self)
+
